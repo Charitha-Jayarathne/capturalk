@@ -1,0 +1,32 @@
+{
+  "name": "capturalk-backend",
+  "version": "1.0.0",
+  "description": "Backend API for CapturaLK Photography & Cinematography Platform",
+  "main": "src/server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "dev": "node --watch src/server.js",
+    "test-connections": "node src/utils/testConnections.js"
+  },
+  "keywords": [
+    "mern",
+    "capturalk",
+    "express",
+    "mongodb",
+    "cloudinary"
+  ],
+  "author": "CapturaLK Team",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^3.0.3",
+    "cloudinary": "^2.5.1",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.7",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "mongoose": "^8.12.1",
+    "morgan": "^1.10.0",
+    "multer": "^1.4.5-lts.1"
+  }
+}

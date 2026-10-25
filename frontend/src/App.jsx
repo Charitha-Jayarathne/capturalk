@@ -1,41 +1,67 @@
-﻿import React, { useState } from 'react';
+import React, { useState } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Navbar from './components/Navbar';
-import Hero from './components/Hero';
-import StorySection from './components/StorySection';
-import PortfolioPreview from './components/PortfolioPreview';
 import Footer from './components/Footer';
 import BookingModal from './components/BookingModal';
+import ScrollToTop from './components/ScrollToTop';
 
-function App() {
+import Home from './pages/Home';
+import AboutUs from './pages/AboutUs';
+import PortfolioPage from './pages/PortfolioPage';
+import ClientGallery from './pages/ClientGallery';
+import ReviewsPage from './pages/ReviewsPage';
+import ContactUs from './pages/ContactUs';
+import AdminPage from './pages/AdminPage';
+
+function AppContent() {
   const [isBookingOpen, setIsBookingOpen] = useState(false);
+  const location = useLocation();
+  const isAdmin = location.pathname.startsWith('/admin');
+
+  const openBooking = () => setIsBookingOpen(true);
+  const closeBooking = () => setIsBookingOpen(false);
 
   return (
     <div className="min-h-screen bg-[#070707] text-neutral-100 flex flex-col font-sans selection:bg-[#ff6a13] selection:text-white">
-      {/* Top Floating Transparent Navigation */}
-      <Navbar onOpenBooking={() => setIsBookingOpen(true)} />
+      {/* Top Floating Luxury Navigation (hidden on Admin pages) */}
+      {!isAdmin && <Navbar onOpenBooking={openBooking} />}
 
-      {/* Main Content */}
+      {/* Dynamic Route Pages */}
       <main className="flex-grow">
-        {/* Fullscreen Hero Section (Matching media_1790519034685.png) */}
-        <Hero onOpenBooking={() => setIsBookingOpen(true)} />
-
-        {/* Story Section: Inspired by the Elegance of Simplicity (Matching media_1790517783083.png) */}
-        <StorySection onOpenBooking={() => setIsBookingOpen(true)} />
-
-        {/* Selected Portfolio Gallery */}
-        <PortfolioPreview onOpenBooking={() => setIsBookingOpen(true)} />
+        <Routes>
+          <Route path="/" element={<Home onOpenBooking={openBooking} />} />
+          <Route path="/about" element={<AboutUs onOpenBooking={openBooking} />} />
+          <Route path="/portfolio" element={<PortfolioPage onOpenBooking={openBooking} />} />
+          <Route path="/client-gallery" element={<ClientGallery onOpenBooking={openBooking} />} />
+          <Route path="/reviews" element={<ReviewsPage onOpenBooking={openBooking} />} />
+          <Route path="/contact" element={<ContactUs onOpenBooking={openBooking} />} />
+          <Route path="/admin" element={<AdminPage />} />
+          
+          {/* Fallback route */}
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
       </main>
 
-      {/* Footer */}
-      <Footer onOpenBooking={() => setIsBookingOpen(true)} />
+      {/* Global Luxury Footer (hidden on Admin pages) */}
+      {!isAdmin && <Footer onOpenBooking={openBooking} />}
 
-      {/* Reservation & Booking Modal */}
+      {/* Reservation & Booking Modal (accessible globally across all pages) */}
       <BookingModal 
         isOpen={isBookingOpen} 
-        onClose={() => setIsBookingOpen(false)} 
+        onClose={closeBooking} 
       />
     </div>
   );
 }
 
+function App() {
+  return (
+    <BrowserRouter>
+      <ScrollToTop />
+      <AppContent />
+    </BrowserRouter>
+  );
+}
+
 export default App;
+

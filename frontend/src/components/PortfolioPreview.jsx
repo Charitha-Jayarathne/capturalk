@@ -58,8 +58,8 @@ export default function PortfolioPreview({ onOpenBooking }) {
         {/* Section Header */}
         <div className="flex flex-col md:flex-row md:items-end justify-between mb-12 gap-6">
           <div>
-            <div className="inline-flex items-center gap-2 text-xs tracking-[0.25em] text-[#ff6a13] font-semibold uppercase mb-2">
-              <span className="w-1.5 h-1.5 rounded-full bg-[#ff6a13]" />
+            <div className="inline-flex items-center gap-2 text-xs tracking-[0.25em] text-neutral-400 font-semibold uppercase mb-2">
+              <span className="w-1.5 h-1.5 rounded-full bg-white/60" />
               Selected Portfolio
             </div>
             <h2 className="font-serif-luxury text-3xl sm:text-5xl font-light text-white tracking-tight">
@@ -77,7 +77,7 @@ export default function PortfolioPreview({ onOpenBooking }) {
                 className={
                   "text-[11px] font-semibold tracking-[0.18em] uppercase px-4 py-2 border transition-all " +
                   (filter === cat
-                    ? "bg-[#ff6a13] text-white border-[#ff6a13] shadow-md shadow-[#ff6a13]/25"
+                    ? "bg-white text-black border-white shadow-sm"
                     : "bg-neutral-900/60 text-neutral-400 border-neutral-800 hover:text-white hover:border-neutral-700")
                 }
               >
@@ -105,11 +105,11 @@ export default function PortfolioPreview({ onOpenBooking }) {
               {/* Overlay Content */}
               <div className="absolute inset-0 p-6 flex flex-col justify-between">
                 <div className="flex justify-between items-start">
-                  <span className="px-2.5 py-1 text-[10px] tracking-[0.2em] font-bold uppercase bg-black/70 backdrop-blur-md text-[#ff944d] border border-[#ff6a13]/30">
+                  <span className="px-2.5 py-1 text-[10px] tracking-[0.2em] font-bold uppercase bg-black/70 backdrop-blur-md text-neutral-200 border border-white/20">
                     {item.category}
                   </span>
                   <div className="w-8 h-8 rounded-full bg-white/10 backdrop-blur-md flex items-center justify-center text-white opacity-0 group-hover:opacity-100 transition-opacity transform group-hover:rotate-45 duration-300">
-                    <ArrowUpRight className="w-4 h-4 text-[#ff6a13]" />
+                    <ArrowUpRight className="w-4 h-4 text-white" />
                   </div>
                 </div>
 
@@ -127,7 +127,7 @@ export default function PortfolioPreview({ onOpenBooking }) {
         </div>
 
         {/* Bottom Banner */}
-        <div className="mt-16 p-8 border border-neutral-800 bg-gradient-to-r from-neutral-950 via-[#14100c] to-neutral-950 flex flex-col sm:flex-row items-center justify-between gap-6">
+        <div className="mt-16 p-8 border border-neutral-800 bg-neutral-950 flex flex-col sm:flex-row items-center justify-between gap-6">
           <div>
             <h3 className="font-serif-luxury text-2xl sm:text-3xl text-white font-medium">
               Planning your celebration in Sri Lanka or Overseas?
@@ -139,7 +139,7 @@ export default function PortfolioPreview({ onOpenBooking }) {
           <button
             type="button"
             onClick={onOpenBooking}
-            className="px-7 py-3 bg-[#ff6a13] hover:bg-[#e05300] text-white text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-300 shadow-lg shadow-[#ff6a13]/25 flex-shrink-0"
+            className="px-7 py-3 bg-white hover:bg-neutral-200 text-black text-xs font-semibold tracking-[0.2em] uppercase transition-all duration-300 shadow-sm flex-shrink-0"
           >
             Check Date Availability
           </button>

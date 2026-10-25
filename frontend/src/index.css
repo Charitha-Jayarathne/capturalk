@@ -657,6 +657,9 @@
   .gap-6 {
     gap: calc(var(--spacing) * 6);
   }
+  .gap-8 {
+    gap: calc(var(--spacing) * 8);
+  }
   .gap-12 {
     gap: calc(var(--spacing) * 12);
   }
@@ -684,6 +687,11 @@
     --tw-space-y-reverse: 0;
     margin-block-start: calc(calc(var(--spacing) * 4) * var(--tw-space-y-reverse));
     margin-block-end: calc(calc(var(--spacing) * 4) * calc(1 - var(--tw-space-y-reverse)));
+  }
+  :where(.space-y-6 > :not(:last-child)) {
+    --tw-space-y-reverse: 0;
+    margin-block-start: calc(calc(var(--spacing) * 6) * var(--tw-space-y-reverse));
+    margin-block-end: calc(calc(var(--spacing) * 6) * calc(1 - var(--tw-space-y-reverse)));
   }
   :where(.space-y-8 > :not(:last-child)) {
     --tw-space-y-reverse: 0;
@@ -2070,3 +2078,323 @@
     }
   }
 }
+
+@keyframes luxuryLinePulse {
+  0%, 100% {
+    opacity: 0.35;
+    transform: scaleY(0.85);
+  }
+  50% {
+    opacity: 0.95;
+    transform: scaleY(1.15);
+  }
+}
+
+.animate-luxury-line {
+  animation: luxuryLinePulse 3.5s ease-in-out infinite;
+}
+
+@keyframes maskedSlideUp {
+  0% {
+    transform: translateY(120%);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.animate-masked-slide-up {
+  display: inline-block;
+  will-change: transform, opacity;
+  animation: maskedSlideUp 1.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+}
+
+@keyframes luxuryTitleBreathe {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    letter-spacing: 0.18em;
+    filter: drop-shadow(0 16px 36px rgba(0, 0, 0, 0.9));
+  }
+  50% {
+    transform: scale(1.025) translateY(-3px);
+    letter-spacing: 0.22em;
+    filter: drop-shadow(0 24px 50px rgba(0, 0, 0, 0.95));
+  }
+}
+
+.animate-luxury-breathe {
+  display: inline-block;
+  letter-spacing: 0.18em;
+  will-change: transform, letter-spacing, filter;
+  animation: luxuryTitleBreathe 6.5s ease-in-out 1.4s infinite;
+}
+
+@keyframes maskedSubtitle {
+  0% {
+    transform: translateY(115%);
+    opacity: 0;
+    letter-spacing: 0.24em;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+    letter-spacing: 0.44em;
+  }
+}
+
+.animate-masked-subtitle {
+  display: inline-block;
+  will-change: transform, letter-spacing, opacity;
+  animation: maskedSubtitle 1.3s cubic-bezier(0.16, 1, 0.3, 1) 0.5s backwards;
+}
+
+/* ==========================================================
+   SECTION 3 LUXURY FINE-ART PHOTO ANIMATIONS
+   ========================================================== */
+@keyframes luxuryImageBreathe {
+  0%, 100% {
+    transform: scale(1) translateY(0);
+    filter: brightness(1) contrast(1.02);
+  }
+  50% {
+    transform: scale(1.038) translateY(-4px);
+    filter: brightness(1.05) contrast(1.05);
+  }
+}
+
+@keyframes luxuryGlassShimmer {
+  0% {
+    transform: translateX(-180%) skewX(-25deg);
+    opacity: 0;
+  }
+  15% {
+    opacity: 0.25;
+  }
+  35%, 100% {
+    transform: translateX(280%) skewX(-25deg);
+    opacity: 0;
+  }
+}
+
+@keyframes luxuryFrameGlow {
+  0%, 100% {
+    box-shadow: 0 20px 50px -10px rgba(0, 0, 0, 0.85), 0 0 0 1px rgba(255, 106, 19, 0.12);
+  }
+  50% {
+    box-shadow: 0 28px 65px -10px rgba(0, 0, 0, 0.95), 0 0 26px 2px rgba(255, 106, 19, 0.28);
+  }
+}
+
+.animate-story-photo-breathe {
+  animation: luxuryImageBreathe 8.5s ease-in-out infinite;
+  will-change: transform, filter;
+}
+
+.animate-story-glass-shimmer {
+  animation: luxuryGlassShimmer 9s cubic-bezier(0.4, 0, 0.2, 1) infinite;
+  will-change: transform, opacity;
+}
+
+.animate-story-frame-glow {
+  animation: luxuryFrameGlow 8.5s ease-in-out infinite;
+}
+
+/* ==========================================================
+   CAPTURA LK STUDIO ADMIN PORTAL STYLES
+   ========================================================== */
+.admin-card {
+  background-color: #0e0e14;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 6px;
+  transition: all 0.25s ease;
+}
+
+.admin-card:hover {
+  border-color: rgba(255, 106, 19, 0.35);
+  box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.7);
+}
+
+.admin-input {
+  background-color: #12121a;
+  border: 1px solid #22222f;
+  color: #f3f3f3;
+  outline: none;
+  transition: all 0.2s ease;
+}
+
+.admin-input:focus {
+  border-color: #ff6a13;
+  background-color: #151522;
+  box-shadow: 0 0 0 2px rgba(255, 106, 19, 0.15);
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+}
+
+.admin-table th {
+  background-color: #12121b;
+  border-bottom: 1px solid #1f1f2e;
+  padding: 12px 18px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #8e8e9e;
+  font-weight: 600;
+}
+
+.admin-table td {
+  padding: 16px 18px;
+  border-bottom: 1px solid #181824;
+  vertical-align: middle;
+}
+
+.admin-table tbody tr {
+  transition: background-color 0.15s ease;
+}
+
+.admin-table tbody tr:hover {
+  background-color: rgba(255, 255, 255, 0.025);
+}
+
+.admin-badge-confirmed {
+  background-color: rgba(16, 185, 129, 0.12);
+  color: #34d399;
+  border: 1px solid rgba(16, 185, 129, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.admin-badge-pending {
+  background-color: rgba(245, 158, 11, 0.12);
+  color: #fbbf24;
+  border: 1px solid rgba(245, 158, 11, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.admin-badge-post {
+  background-color: rgba(168, 85, 247, 0.12);
+  color: #c084fc;
+  border: 1px solid rgba(168, 85, 247, 0.3);
+  padding: 3px 8px;
+  border-radius: 4px;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+}
+
+.admin-nav-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 9px 12px;
+  color: #9e9eb0;
+  border-radius: 6px;
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  background: transparent;
+  border: none;
+  text-align: left;
+  transition: all 0.18s ease;
+}
+
+.admin-nav-item:hover {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: #ffffff;
+}
+
+.admin-nav-item.active {
+  background-color: rgba(255, 106, 19, 0.12);
+  color: #ff6a13;
+  font-weight: 600;
+}
+
+.admin-nav-badge {
+  font-size: 10px;
+  font-family: monospace;
+  padding: 2px 6px;
+  border-radius: 10px;
+  background-color: rgba(255, 255, 255, 0.08);
+  color: #a0a0b2;
+}
+
+.admin-nav-item.active .admin-nav-badge {
+  background-color: rgba(255, 106, 19, 0.2);
+  color: #ff6a13;
+}
+
+/* Hero Section: Proximity-activated Side Navigation Arrows */
+.hero-nav-arrow {
+  opacity: 0;
+  transform: scale(0.88);
+  pointer-events: auto;
+  transition: opacity 0.35s cubic-bezier(0.16, 1, 0.3, 1), transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), background-color 0.25s ease, border-color 0.25s ease, color 0.25s ease, box-shadow 0.25s ease;
+  background-color: rgba(0, 0, 0, 0.45);
+  border: 1px solid rgba(255, 255, 255, 0.22);
+  color: #ffffff;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+}
+
+/* On mobile / touch devices, keep them slightly visible so users can tap */
+@media (max-width: 640px) {
+  .hero-nav-arrow {
+    opacity: 0.75 !important;
+    transform: scale(0.9) !important;
+  }
+}
+
+/* When mouse enters anywhere in the hero section, arrows peek softly */
+#home:hover .hero-nav-arrow {
+  opacity: 0.35;
+  transform: scale(1);
+}
+
+/* When mouse approaches or hovers within the wide side zone (or directly on arrow), glow vibrantly */
+.hero-side-zone:hover .hero-nav-arrow,
+.hero-nav-arrow:hover {
+  opacity: 1 !important;
+  transform: scale(1.15) !important;
+  background-color: rgba(0, 0, 0, 0.88) !important;
+  border-color: #ff6a13 !important;
+  color: #ff6a13 !important;
+  box-shadow: 0 0 30px rgba(255, 106, 19, 0.6), 0 8px 32px rgba(0, 0, 0, 0.8) !important;
+}
+
+/* Left arrow specific translation */
+.hero-nav-arrow-left {
+  transform: translateX(-8px) scale(0.88);
+}
+#home:hover .hero-nav-arrow-left {
+  transform: translateX(0) scale(1);
+}
+.hero-side-zone-left:hover .hero-nav-arrow-left,
+.hero-nav-arrow-left:hover {
+  transform: translateX(4px) scale(1.15) !important;
+}
+
+/* Right arrow specific translation */
+.hero-nav-arrow-right {
+  transform: translateX(8px) scale(0.88);
+}
+#home:hover .hero-nav-arrow-right {
+  transform: translateX(0) scale(1);
+}
+.hero-side-zone-right:hover .hero-nav-arrow-right,
+.hero-nav-arrow-right:hover {
+  transform: translateX(-4px) scale(1.15) !important;
+}
+
+
