@@ -39,6 +39,8 @@ import {
   Crop,
   ArrowUp,
   ArrowDown,
+  ChevronUp,
+  GripVertical,
   X
 } from 'lucide-react';
 import Logo from '../components/Logo';
@@ -50,7 +52,8 @@ import {
   saveHomeContent, 
   resetHomeContent, 
   compressImageFile, 
-  DEFAULT_HOME_CONTENT 
+  DEFAULT_HOME_CONTENT,
+  DEFAULT_CATEGORY_ITEMS
 } from '../utils/homeContentService';
 import { 
   getAboutContent, 
@@ -112,6 +115,225 @@ export default function AdminPage() {
     setTimeout(() => setSaveSuccessMsg(''), 5000);
   };
 
+  const saveAndPublishCategoriesBgUpdate = (bgData) => {
+    const updatedHome = {
+      ...homeCms,
+      categories: {
+        ...homeCms.categories,
+        ...bgData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Category background updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  const saveAndPublishStoryUpdate = (storyData) => {
+    const updatedHome = {
+      ...homeCms,
+      story: {
+        ...homeCms.story,
+        ...storyData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Story section updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  const saveAndPublishReviewsUpdate = (reviewsData) => {
+    const updatedHome = {
+      ...homeCms,
+      reviews: {
+        ...homeCms.reviews,
+        ...reviewsData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Reviews section updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  const saveAndPublishCalloutUpdate = (calloutData) => {
+    const updatedHome = {
+      ...homeCms,
+      callout: {
+        ...homeCms.callout,
+        ...calloutData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Callout banner background updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  // Dynamic Categories Management State
+  const categoryItems = homeCms.categories?.items || DEFAULT_CATEGORY_ITEMS;
+  const [activeCatId, setActiveCatId] = useState(categoryItems[0]?.id || 'weddings');
+  const [draggedCatIndex, setDraggedCatIndex] = useState(null);
+  const [showAddCatModal, setShowAddCatModal] = useState(false);
+  const [newCatForm, setNewCatForm] = useState({
+    title: '',
+    subtitle: '',
+    mediaType: 'images' // 'images' | 'videos' | 'both'
+  });
+
+  // Ensure activeCatId points to a valid category
+  useEffect(() => {
+    const items = homeCms.categories?.items || DEFAULT_CATEGORY_ITEMS;
+    if (!items.some(c => c.id === activeCatId) && items.length > 0) {
+      setActiveCatId(items[0].id);
+    }
+  }, [homeCms.categories?.items, activeCatId]);
+
+  const saveAndPublishCategories = (newItems) => {
+    const cleanItems = newItems.map((it, idx) => ({
+      id: it.id || `cat-${Date.now()}-${idx}`,
+      title: it.title || `Category ${idx + 1}`,
+      subtitle: it.subtitle || '',
+      mediaType: it.mediaType || 'images',
+      isHidden: Boolean(it.isHidden),
+      slides: Array.isArray(it.slides) ? it.slides : [],
+      videoUrl: it.videoUrl || '',
+      videoPoster: it.videoPoster || '',
+      videoTitle: it.videoTitle || ''
+    }));
+
+    const weddingCategory = cleanItems.find(c => c.id === 'weddings');
+    const graduationCategory = cleanItems.find(c => c.id === 'graduations');
+    const preshootCategory = cleanItems.find(c => c.id === 'preshoots');
+    const commercialCategory = cleanItems.find(c => c.id === 'commercial');
+    const video360Category = cleanItems.find(c => c.id === 'video360' || c.mediaType === 'videos');
+
+    const updatedCategories = {
+      ...homeCms.categories,
+      items: cleanItems,
+      weddingSlides: weddingCategory?.slides || homeCms.categories.weddingSlides,
+      graduationSlides: graduationCategory?.slides || homeCms.categories.graduationSlides,
+      preshootSlides: preshootCategory?.slides || homeCms.categories.preshootSlides,
+      commercialSlides: commercialCategory?.slides || homeCms.categories.commercialSlides,
+      video360: {
+        url: video360Category?.videoUrl || homeCms.categories.video360?.url,
+        poster: video360Category?.videoPoster || homeCms.categories.video360?.poster,
+        title: video360Category?.videoTitle || homeCms.categories.video360?.title
+      }
+    };
+
+    const updatedHome = {
+      ...homeCms,
+      categories: updatedCategories
+    };
+
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Categories updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 4000);
+  };
+
+  const handleAddCategory = () => {
+    if (!newCatForm.title.trim()) {
+      alert('Please enter a category title.');
+      return;
+    }
+    const newId = newCatForm.title.toLowerCase().replace(/[^a-z0-9]/g, '-') + '-' + Date.now().toString().slice(-4);
+    const newCat = {
+      id: newId,
+      title: newCatForm.title.trim(),
+      subtitle: newCatForm.subtitle.trim() || 'Fine Art Photography & Film',
+      mediaType: newCatForm.mediaType || 'images',
+      isHidden: false,
+      slides: newCatForm.mediaType === 'videos' ? [] : [
+        {
+          id: 1,
+          title: `${newCatForm.title.trim()} Masterpiece`,
+          location: 'Signature Venue / Studio',
+          url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85'
+        }
+      ],
+      videoUrl: newCatForm.mediaType !== 'images' ? 'https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-posing-in-a-field-at-sunset-42998-large.mp4' : '',
+      videoPoster: newCatForm.mediaType !== 'images' ? 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80' : '',
+      videoTitle: `${newCatForm.title.trim()} Cinematic Experience`
+    };
+
+    const items = [...categoryItems, newCat];
+    saveAndPublishCategories(items);
+    setActiveCatId(newId);
+    setNewCatForm({ title: '', subtitle: '', mediaType: 'images' });
+    setShowAddCatModal(false);
+  };
+
+  const handleDeleteCategory = (catId, catTitle) => {
+    if (categoryItems.length <= 1) {
+      alert('You must have at least one category in the showcase.');
+      return;
+    }
+    if (!window.confirm(`Are you sure you want to delete "${catTitle}"? This will remove it from Section 2.`)) {
+      return;
+    }
+    const updated = categoryItems.filter(c => c.id !== catId);
+    saveAndPublishCategories(updated);
+    if (activeCatId === catId) {
+      setActiveCatId(updated[0]?.id || '');
+    }
+  };
+
+  const handleToggleHideCategory = (catId) => {
+    const updated = categoryItems.map(c => {
+      if (c.id === catId) {
+        return { ...c, isHidden: !c.isHidden };
+      }
+      return c;
+    });
+    saveAndPublishCategories(updated);
+  };
+
+  const handleMoveCategory = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= categoryItems.length) return;
+    const updated = [...categoryItems];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    saveAndPublishCategories(updated);
+  };
+
+  const handleUpdateActiveCat = (updates) => {
+    const updated = categoryItems.map(c => {
+      if (c.id === activeCatId) {
+        return { ...c, ...updates };
+      }
+      return c;
+    });
+    saveAndPublishCategories(updated);
+  };
+
+  const handleAddSlideToActiveCat = () => {
+    const currentCat = categoryItems.find(c => c.id === activeCatId);
+    if (!currentCat) return;
+    const slides = currentCat.slides || [];
+    const newSlide = {
+      id: Date.now(),
+      title: `${currentCat.title} Slide ${slides.length + 1}`,
+      location: 'Venue / Location',
+      url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85'
+    };
+    handleUpdateActiveCat({ slides: [...slides, newSlide] });
+  };
+
+  const handleRemoveSlideFromActiveCat = (slideIdx) => {
+    const currentCat = categoryItems.find(c => c.id === activeCatId);
+    if (!currentCat) return;
+    const slides = currentCat.slides || [];
+    if (slides.length <= 1) {
+      alert('Photo categories must have at least one slide.');
+      return;
+    }
+    const updated = slides.filter((_, idx) => idx !== slideIdx);
+    handleUpdateActiveCat({ slides: updated });
+  };
+
   // About Us Page CMS State
   const [aboutCms, setAboutCms] = useState(getAboutContent());
   const [expandedAboutSection, setExpandedAboutSection] = useState(0);
@@ -141,6 +363,9 @@ export default function AdminPage() {
       tagline: 'SACRED HERITAGE & ARTISTRY',
       image: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1600&q=90',
       imagePosition: newIdx % 2 === 0 ? 'left' : 'right', // alternating layout!
+      bgType: 'default',
+      customBgImage: '',
+      bgOpacity: 0.40,
       quote: '“True beauty lies in the quiet sincerity of unscripted moments.”',
       richContent: '<p>Documenting life with heartfelt intention, editorial elegance, and deep respect for Sri Lankan wedding traditions.</p>',
       stats: [
@@ -163,10 +388,6 @@ export default function AdminPage() {
     }
     if (window.confirm(`Are you sure you want to remove Section ${idx + 1}: "${aboutCms.sections[idx]?.title || 'Untitled'}"?`)) {
       const updatedSections = aboutCms.sections.filter((_, i) => i !== idx);
-      // Re-balance alternating layout
-      updatedSections.forEach((sec, i) => {
-        sec.imagePosition = i % 2 === 0 ? 'left' : 'right';
-      });
       const updated = { ...aboutCms, sections: updatedSections };
       saveAndPublishAboutUpdate(updated);
       setExpandedAboutSection(Math.max(0, idx - 1));
@@ -180,10 +401,6 @@ export default function AdminPage() {
     const temp = updatedSections[idx];
     updatedSections[idx] = updatedSections[targetIdx];
     updatedSections[targetIdx] = temp;
-    // Auto-update alternating layout for sequential downward harmony
-    updatedSections.forEach((sec, i) => {
-      sec.imagePosition = i % 2 === 0 ? 'left' : 'right';
-    });
     const updated = { ...aboutCms, sections: updatedSections };
     saveAndPublishAboutUpdate(updated);
     setExpandedAboutSection(targetIdx);
@@ -938,19 +1155,44 @@ export default function AdminPage() {
                   </div>
 
                   {/* --------------------------------------------------------- */}
-                  {/* SECTION 2: CATEGORY SHOWCASE (5 COLUMNS) */}
+                  {/* SECTION 2: DYNAMIC CATEGORY SHOWCASE & MANAGEMENT         */}
                   {/* --------------------------------------------------------- */}
                   <div className="admin-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
                         <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
                           SECTION 2
                         </span>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
-                          Category Showcase (5 Expandable Columns)
+                          Dynamic Category Management & Showcase
                         </h3>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                          Add, reorder, hide or delete categories. Choose media type (Images / Videos / Both) for each. Automatically updates Section 2 on the live website.
+                        </p>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>5 Vertical Pillars</span>
+
+                      <button
+                        type="button"
+                        onClick={() => setShowAddCatModal(true)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '9px 16px',
+                          backgroundColor: '#ff6a13',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '6px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 4px 14px rgba(255, 106, 19, 0.35)',
+                          transition: 'all 0.2s ease'
+                        }}
+                      >
+                        <Plus style={{ width: '15px', height: '15px' }} />
+                        <span>Add New Category</span>
+                      </button>
                     </div>
 
                     {/* Section Background Controller */}
@@ -980,10 +1222,7 @@ export default function AdminPage() {
                             type="radio"
                             name="catBgType"
                             checked={homeCms.categories.bgType === 'custom'}
-                            onChange={() => setHomeCms({
-                              ...homeCms,
-                              categories: { ...homeCms.categories, bgType: 'custom' }
-                            })}
+                            onChange={() => saveAndPublishCategoriesBgUpdate({ bgType: 'custom' })}
                             style={{ accentColor: '#ff6a13' }}
                           />
                           <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
@@ -992,12 +1231,16 @@ export default function AdminPage() {
 
                       {homeCms.categories.bgType === 'custom' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '10px', borderTop: '1px solid #1e1e2d' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             {homeCms.categories.customBgImage && (
                               <img
                                 src={homeCms.categories.customBgImage}
                                 alt="Category Bg Preview"
-                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                onClick={() => openHeroEditor(homeCms.categories.customBgImage, 'Adjust Category Showcase Background', (croppedUrl) => {
+                                  saveAndPublishCategoriesBgUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                title="Click to adjust position in Preview Editor"
                               />
                             )}
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
@@ -1008,30 +1251,32 @@ export default function AdminPage() {
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                  setHomeCms({
-                                    ...homeCms,
-                                    categories: { 
-                                      ...homeCms.categories, 
-                                      bgType: 'custom', 
-                                      customBgImage: dataUrl 
-                                    }
+                                  openHeroEditor(dataUrl, 'Adjust Category Showcase Background', (croppedUrl) => {
+                                    saveAndPublishCategoriesBgUpdate({ bgType: 'custom', customBgImage: croppedUrl });
                                   });
                                 })}
                               />
                             </label>
 
+                            {homeCms.categories.customBgImage && (
+                              <button
+                                type="button"
+                                onClick={() => openHeroEditor(homeCms.categories.customBgImage, 'Adjust Category Showcase Background', (croppedUrl) => {
+                                  saveAndPublishCategoriesBgUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                title="Adjust framing, zoom, and position"
+                              >
+                                <Crop style={{ width: '13px', height: '13px' }} />
+                                <span>Adjust & Frame Position</span>
+                              </button>
+                            )}
+
                             <input
                               type="text"
                               placeholder="Or paste background image URL..."
-                              value={homeCms.categories.customBgImage}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                categories: { 
-                                  ...homeCms.categories, 
-                                  bgType: 'custom', 
-                                  customBgImage: e.target.value 
-                                }
-                              })}
+                              value={homeCms.categories.customBgImage || ''}
+                              onChange={(e) => saveAndPublishCategoriesBgUpdate({ bgType: 'custom', customBgImage: e.target.value })}
                               className="admin-input"
                               style={{ flex: 1, minWidth: '220px', padding: '8px 12px', borderRadius: '4px', fontSize: '12px' }}
                             />
@@ -1045,10 +1290,7 @@ export default function AdminPage() {
                               max="0.80"
                               step="0.05"
                               value={homeCms.categories.bgOpacity !== undefined ? homeCms.categories.bgOpacity : 0.40}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                categories: { ...homeCms.categories, bgOpacity: parseFloat(e.target.value) }
-                              })}
+                              onChange={(e) => saveAndPublishCategoriesBgUpdate({ bgOpacity: parseFloat(e.target.value) })}
                               style={{ width: '160px', accentColor: '#ff6a13' }}
                             />
                             <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace', fontWeight: 600 }}>
@@ -1060,396 +1302,803 @@ export default function AdminPage() {
                       )}
                     </div>
 
-                    {/* 5-Pillar Showcase Customizer with 5 Slides per Category + 360 Video */}
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
-                        <div>
-                          <strong style={{ display: 'block', fontSize: '13px', color: '#fff' }}>
-                            Category Showcase Pillars (5 Slides per Category + 360° Video)
-                          </strong>
-                          <p style={{ margin: '2px 0 0 0', fontSize: '12px', color: '#888899' }}>
-                            Select a category below to upload 5 rotating images or customize the 360° video.
-                          </p>
-                        </div>
+                    {/* Category Reorder, Visibility & Selection List */}
+                    <div style={{ marginBottom: '22px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px' }}>
+                        <span style={{ fontSize: '12px', fontWeight: 700, color: '#ff6a13', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+                          Active Showcase Sequence (Drag to Reorder)
+                        </span>
+                        <span style={{ fontSize: '11px', color: '#888899' }}>
+                          {categoryItems.filter(c => !c.isHidden).length} Active on Live Site / {categoryItems.length} Total
+                        </span>
                       </div>
 
-                      {/* Category Tab Selector Buttons */}
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(130px, 1fr))', gap: '8px', marginBottom: '18px' }}>
-                        {[
-                          { id: 'wedding', label: '1. Weddings', badge: '5 Slides', icon: Camera },
-                          { id: 'graduation', label: '2. Graduations', badge: '5 Slides', icon: Sparkles },
-                          { id: 'preshoot', label: '3. Pre-Shoots', badge: '5 Slides', icon: ImageIcon },
-                          { id: 'commercial', label: '4. Corporate', badge: '5 Slides', icon: Layers },
-                          { id: 'video360', label: '5. 360° Video', badge: 'Video Upload', icon: Video }
-                        ].map((tab) => {
-                          const TabIcon = tab.icon;
-                          const isSelected = activeCatPillar === tab.id;
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                        {categoryItems.map((cat, idx) => {
+                          const isSelected = activeCatId === cat.id;
+                          const slideCount = (cat.slides || []).length;
+
                           return (
-                            <button
-                              key={tab.id}
-                              type="button"
-                              onClick={() => setActiveCatPillar(tab.id)}
+                            <div
+                              key={cat.id}
+                              draggable
+                              onDragStart={() => setDraggedCatIndex(idx)}
+                              onDragOver={(e) => e.preventDefault()}
+                              onDrop={() => {
+                                if (draggedCatIndex !== null && draggedCatIndex !== idx) {
+                                  handleMoveCategory(draggedCatIndex, idx);
+                                  setDraggedCatIndex(null);
+                                }
+                              }}
+                              onClick={() => setActiveCatId(cat.id)}
                               style={{
                                 display: 'flex',
-                                flexDirection: 'column',
-                                alignItems: 'flex-start',
-                                gap: '4px',
-                                padding: '10px 12px',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '12px',
+                                padding: '10px 14px',
+                                backgroundColor: isSelected ? 'rgba(255, 106, 19, 0.08)' : (cat.isHidden ? '#0a0a0f' : '#101018'),
+                                border: isSelected ? '1.5px solid #ff6a13' : (cat.isHidden ? '1px dashed #232333' : '1px solid #1c1c28'),
                                 borderRadius: '6px',
-                                backgroundColor: isSelected ? 'rgba(255, 106, 19, 0.12)' : '#101018',
-                                border: isSelected ? '1px solid #ff6a13' : '1px solid #1c1c28',
-                                color: isSelected ? '#ff6a13' : '#a0a0b0',
                                 cursor: 'pointer',
-                                textAlign: 'left',
-                                transition: 'all 0.2s ease'
+                                opacity: cat.isHidden ? 0.6 : 1,
+                                transition: 'all 0.15s ease'
                               }}
                             >
-                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', width: '100%' }}>
-                                <TabIcon style={{ width: '14px', height: '14px', color: isSelected ? '#ff6a13' : '#666677' }} />
-                                <span style={{ fontSize: '12px', fontWeight: isSelected ? 700 : 500, color: isSelected ? '#fff' : '#ccc' }}>
-                                  {tab.label}
+                              {/* Left: Drag Handle & Order Arrows & Category Title */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '180px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', color: '#555566', cursor: 'grab' }} title="Drag to reorder">
+                                  <GripVertical style={{ width: '16px', height: '16px' }} />
+                                </div>
+
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '1px' }}>
+                                  <button
+                                    type="button"
+                                    disabled={idx === 0}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveCategory(idx, idx - 1);
+                                    }}
+                                    style={{
+                                      padding: '1px 3px',
+                                      backgroundColor: 'transparent',
+                                      border: 'none',
+                                      color: idx === 0 ? '#333344' : '#aaa',
+                                      cursor: idx === 0 ? 'default' : 'pointer'
+                                    }}
+                                    title="Move Up"
+                                  >
+                                    <ChevronUp style={{ width: '13px', height: '13px' }} />
+                                  </button>
+                                  <button
+                                    type="button"
+                                    disabled={idx === categoryItems.length - 1}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      handleMoveCategory(idx, idx + 1);
+                                    }}
+                                    style={{
+                                      padding: '1px 3px',
+                                      backgroundColor: 'transparent',
+                                      border: 'none',
+                                      color: idx === categoryItems.length - 1 ? '#333344' : '#aaa',
+                                      cursor: idx === categoryItems.length - 1 ? 'default' : 'pointer'
+                                    }}
+                                    title="Move Down"
+                                  >
+                                    <ChevronDown style={{ width: '13px', height: '13px' }} />
+                                  </button>
+                                </div>
+
+                                <span style={{ fontSize: '11px', fontFamily: 'monospace', fontWeight: 700, color: '#ff6a13', minWidth: '24px' }}>
+                                  {String(idx + 1).padStart(2, '0')}.
                                 </span>
+
+                                <div style={{ display: 'flex', flexDirection: 'column' }}>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                    <span style={{ fontSize: '13px', fontWeight: isSelected ? 700 : 600, color: isSelected ? '#fff' : '#ddd' }}>
+                                      {cat.title}
+                                    </span>
+                                    {cat.isHidden && (
+                                      <span style={{ fontSize: '9px', padding: '1px 5px', borderRadius: '3px', backgroundColor: '#2b2b3d', color: '#ff4444', fontWeight: 600 }}>
+                                        HIDDEN
+                                      </span>
+                                    )}
+                                  </div>
+                                  <span style={{ fontSize: '11px', color: '#777788' }}>
+                                    {cat.subtitle || 'Fine Art Photography & Film'}
+                                  </span>
+                                </div>
                               </div>
-                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '3px', backgroundColor: isSelected ? '#ff6a13' : '#191926', color: isSelected ? '#fff' : '#888899', fontWeight: 600 }}>
-                                {tab.badge}
-                              </span>
-                            </button>
+
+                              {/* Center: Media Type Badge */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                {cat.mediaType === 'images' && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#131f13', color: '#4ade80', border: '1px solid #165b26', fontWeight: 600 }}>
+                                    <Camera style={{ width: '11px', height: '11px' }} />
+                                    <span>Images Only ({slideCount})</span>
+                                  </span>
+                                )}
+                                {cat.mediaType === 'videos' && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#1c172a', color: '#a78bfa', border: '1px solid #432b7a', fontWeight: 600 }}>
+                                    <Video style={{ width: '11px', height: '11px' }} />
+                                    <span>Videos Only</span>
+                                  </span>
+                                )}
+                                {cat.mediaType === 'both' && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '10px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#261b12', color: '#fb923c', border: '1px solid #7c3f15', fontWeight: 600 }}>
+                                    <Layers style={{ width: '11px', height: '11px' }} />
+                                    <span>Both ({slideCount} Slides + Video)</span>
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Right: Actions (Hide/Show & Delete) */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleToggleHideCategory(cat.id)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '5px 8px',
+                                    backgroundColor: cat.isHidden ? '#1e1e2d' : '#142017',
+                                    border: cat.isHidden ? '1px solid #33334a' : '1px solid #23522c',
+                                    borderRadius: '4px',
+                                    color: cat.isHidden ? '#888899' : '#4ade80',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                  title={cat.isHidden ? 'Click to Show on Live Website' : 'Click to Hide from Live Website'}
+                                >
+                                  {cat.isHidden ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
+                                  <span>{cat.isHidden ? 'Hidden' : 'Visible'}</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteCategory(cat.id, cat.title)}
+                                  style={{
+                                    padding: '6px',
+                                    backgroundColor: '#1b1214',
+                                    border: '1px solid #3d1b22',
+                                    borderRadius: '4px',
+                                    color: '#ff4444',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Delete Category"
+                                >
+                                  <Trash2 style={{ width: '13px', height: '13px' }} />
+                                </button>
+                              </div>
+                            </div>
                           );
                         })}
                       </div>
+                    </div>
 
-                      {/* Active Tab Content: 4 Photo Categories (5 Slides Each) */}
-                      {activeCatPillar !== 'video360' && (() => {
-                        const pillarConfig = {
-                          wedding: {
-                            key: 'weddingSlides',
-                            title: 'Weddings & Royal Nuptials (5 Rotating Slides)',
-                            desc: 'These 5 images cycle smoothly in Column 1. Click "Upload File" to replace any slide or paste an image URL.',
-                            coverKey: 'weddingImage'
-                          },
-                          graduation: {
-                            key: 'graduationSlides',
-                            title: 'Graduations & Academic Convocations (5 Rotating Slides)',
-                            desc: 'These 5 images cycle smoothly in Column 2. Click "Upload File" to replace any slide or paste an image URL.',
-                            coverKey: 'graduationImage'
-                          },
-                          preshoot: {
-                            key: 'preshootSlides',
-                            title: 'Pre-Shoots & Engagements (5 Rotating Slides)',
-                            desc: 'These 5 images cycle smoothly in Column 3. Click "Upload File" to replace any slide or paste an image URL.',
-                            coverKey: 'preshootImage'
-                          },
-                          commercial: {
-                            key: 'commercialSlides',
-                            title: 'Corporate Galas & Brand Launches (5 Rotating Slides)',
-                            desc: 'These 5 images cycle smoothly in Column 4. Click "Upload File" to replace any slide or paste an image URL.',
-                            coverKey: 'commercialImage'
-                          }
-                        }[activeCatPillar];
+                    {/* Active Category Editor Section */}
+                    {(() => {
+                      const activeCat = categoryItems.find(c => c.id === activeCatId) || categoryItems[0];
+                      if (!activeCat) return null;
 
-                        const currentSlides = (homeCms.categories?.[pillarConfig.key]?.length === 5)
-                          ? homeCms.categories[pillarConfig.key]
-                          : (DEFAULT_HOME_CONTENT.categories[pillarConfig.key] || []);
+                      const isImages = activeCat.mediaType === 'images' || activeCat.mediaType === 'both';
+                      const isVideos = activeCat.mediaType === 'videos' || activeCat.mediaType === 'both';
+                      const slides = activeCat.slides || [];
 
-                        return (
-                          <div style={{ backgroundColor: '#0d0d14', border: '1px solid #1a1a26', borderRadius: '8px', padding: '16px' }}>
-                            <div style={{ marginBottom: '14px', borderBottom: '1px solid #1a1a26', paddingBottom: '10px' }}>
-                              <h4 style={{ margin: '0 0 4px 0', fontSize: '13px', color: '#ff6a13', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Camera style={{ width: '14px', height: '14px' }} />
-                                {pillarConfig.title}
-                              </h4>
-                              <p style={{ margin: 0, fontSize: '11px', color: '#777788' }}>
-                                {pillarConfig.desc}
+                      return (
+                        <div style={{ backgroundColor: '#0d0d14', border: '1px solid #222232', borderRadius: '8px', padding: '20px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', paddingBottom: '14px', borderBottom: '1px solid #1c1c28', flexWrap: 'wrap', gap: '10px' }}>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                <span style={{ fontSize: '10px', textTransform: 'uppercase', padding: '2px 6px', backgroundColor: '#ff6a13', color: '#fff', fontWeight: 700, borderRadius: '3px' }}>
+                                  Editing Category
+                                </span>
+                                <h4 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: 600 }}>
+                                  {activeCat.title}
+                                </h4>
+                              </div>
+                              <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#888899' }}>
+                                Configure title, subtitle, media type, and upload images/videos for this column.
                               </p>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                              {currentSlides.map((slide, sIdx) => (
-                                <div
-                                  key={slide.id || sIdx}
-                                  style={{
-                                    padding: '12px 14px',
-                                    backgroundColor: '#12121b',
-                                    border: '1px solid #20202e',
-                                    borderRadius: '6px',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '14px',
-                                    flexWrap: 'wrap'
-                                  }}
-                                >
-                                  {/* Thumbnail */}
-                                  <div style={{ position: 'relative' }}>
-                                    <img
-                                      src={slide.url}
-                                      alt={`Slide ${sIdx + 1}`}
-                                      style={{ width: '74px', height: '52px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
-                                    />
-                                    <span
-                                      style={{
-                                        position: 'absolute',
-                                        top: '2px',
-                                        left: '2px',
-                                        fontSize: '9px',
-                                        fontWeight: 700,
-                                        padding: '1px 4px',
-                                        backgroundColor: 'rgba(0,0,0,0.85)',
-                                        color: '#ff6a13',
-                                        borderRadius: '2px'
-                                      }}
-                                    >
-                                      #{sIdx + 1}
-                                    </span>
-                                  </div>
-
-                                  {/* Title, Location & URL */}
-                                  <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '8px' }}>
-                                      <span style={{ fontSize: '11px', fontWeight: 700, color: '#fff', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-                                        Slide {sIdx + 1} {sIdx === 0 ? '(Default Cover)' : ''}
-                                      </span>
-                                      <span style={{ fontSize: '10px', color: '#666677' }}>
-                                        {slide.location || 'Location label'}
-                                      </span>
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                      <input
-                                        type="text"
-                                        value={slide.url || ''}
-                                        placeholder="Image URL or upload file below"
-                                        onChange={(e) => {
-                                          const updated = [...currentSlides];
-                                          updated[sIdx] = { ...updated[sIdx], url: e.target.value };
-                                          const newCategories = {
-                                            ...homeCms.categories,
-                                            [pillarConfig.key]: updated
-                                          };
-                                          if (sIdx === 0) newCategories[pillarConfig.coverKey] = e.target.value;
-                                          setHomeCms({ ...homeCms, categories: newCategories });
-                                        }}
-                                        className="admin-input"
-                                        style={{ flex: 1, padding: '6px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
-                                      />
-                                    </div>
-
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                      <input
-                                        type="text"
-                                        value={slide.title || ''}
-                                        placeholder="Slide Title / Caption"
-                                        onChange={(e) => {
-                                          const updated = [...currentSlides];
-                                          updated[sIdx] = { ...updated[sIdx], title: e.target.value };
-                                          setHomeCms({
-                                            ...homeCms,
-                                            categories: { ...homeCms.categories, [pillarConfig.key]: updated }
-                                          });
-                                        }}
-                                        className="admin-input"
-                                        style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#bbb' }}
-                                      />
-                                      <input
-                                        type="text"
-                                        value={slide.location || ''}
-                                        placeholder="Location / Venue"
-                                        onChange={(e) => {
-                                          const updated = [...currentSlides];
-                                          updated[sIdx] = { ...updated[sIdx], location: e.target.value };
-                                          setHomeCms({
-                                            ...homeCms,
-                                            categories: { ...homeCms.categories, [pillarConfig.key]: updated }
-                                          });
-                                        }}
-                                        className="admin-input"
-                                        style={{ flex: 1, padding: '4px 8px', borderRadius: '4px', fontSize: '10px', color: '#bbb' }}
-                                      />
-                                    </div>
-                                  </div>
-
-                                  {/* Upload Button */}
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', backgroundColor: '#181824', border: '1px solid #2e2e42', color: '#eee', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
-                                    <Upload style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
-                                    <span>Upload Slide {sIdx + 1}</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                        const updated = [...currentSlides];
-                                        updated[sIdx] = { ...updated[sIdx], url: dataUrl };
-                                        const newCategories = {
-                                          ...homeCms.categories,
-                                          [pillarConfig.key]: updated
-                                        };
-                                        if (sIdx === 0) newCategories[pillarConfig.coverKey] = dataUrl;
-                                        setHomeCms({ ...homeCms, categories: newCategories });
-                                      })}
-                                    />
-                                  </label>
-                                </div>
-                              ))}
-                            </div>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleHideCategory(activeCat.id)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '6px 12px',
+                                backgroundColor: activeCat.isHidden ? '#201818' : '#142017',
+                                border: activeCat.isHidden ? '1px solid #4a2323' : '1px solid #23522c',
+                                borderRadius: '4px',
+                                color: activeCat.isHidden ? '#ff6666' : '#4ade80',
+                                fontSize: '11px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              {activeCat.isHidden ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
+                              <span>{activeCat.isHidden ? 'Category is Hidden' : 'Category is Visible'}</span>
+                            </button>
                           </div>
-                        );
-                      })()}
 
-                      {/* Active Tab Content: Column 5 (360° Video) */}
-                      {activeCatPillar === 'video360' && (() => {
-                        const videoConfig = homeCms.categories?.video360 || DEFAULT_HOME_CONTENT.categories.video360;
-
-                        return (
-                          <div style={{ backgroundColor: '#0d0d14', border: '1px solid #1a1a26', borderRadius: '8px', padding: '18px' }}>
-                            <div style={{ marginBottom: '14px', borderBottom: '1px solid #1a1a26', paddingBottom: '10px' }}>
-                              <h4 style={{ margin: '0 0 4px 0', fontSize: '14px', color: '#ff6a13', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                <Video style={{ width: '15px', height: '15px' }} />
-                                Column 5: 360° Panoramic Video Showcase
-                              </h4>
-                              <p style={{ margin: 0, fontSize: '11px', color: '#777788' }}>
-                                Upload a high-definition video file (.mp4 or .webm up to 25MB) or paste any direct online video link.
-                              </p>
-                            </div>
-
-                            {/* Live Video Player Preview */}
-                            <div style={{ marginBottom: '16px', backgroundColor: '#08080c', border: '1px solid #20202e', borderRadius: '6px', overflow: 'hidden', padding: '12px' }}>
-                              <span style={{ fontSize: '11px', color: '#888899', display: 'block', marginBottom: '8px', fontWeight: 600 }}>
-                                Interactive Video Preview:
-                              </span>
-                              <video
-                                key={videoConfig.url}
-                                src={videoConfig.url}
-                                poster={videoConfig.poster}
-                                controls
-                                muted
-                                playsInline
-                                style={{ width: '100%', maxHeight: '220px', borderRadius: '4px', backgroundColor: '#000', objectFit: 'contain' }}
+                          {/* Meta Settings: Title, Subtitle & Media Type */}
+                          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '14px', marginBottom: '20px' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ccc', marginBottom: '6px' }}>
+                                Category Title (Section 2 Column Header)
+                              </label>
+                              <input
+                                type="text"
+                                value={activeCat.title}
+                                onChange={(e) => handleUpdateActiveCat({ title: e.target.value })}
+                                placeholder="e.g. Fine Art Nuptials"
+                                className="admin-input"
+                                style={{ width: '100%', padding: '8px 10px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
                               />
                             </div>
 
-                            {/* Video Upload & URL Controls */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-                              <div style={{ padding: '14px', backgroundColor: '#12121b', border: '1px solid #20202e', borderRadius: '6px' }}>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
-                                  Video Source (.mp4 / .webm File Upload or Direct URL)
-                                </label>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ccc', marginBottom: '6px' }}>
+                                Subtitle / Venue Label
+                              </label>
+                              <input
+                                type="text"
+                                value={activeCat.subtitle || ''}
+                                onChange={(e) => handleUpdateActiveCat({ subtitle: e.target.value })}
+                                placeholder="e.g. Sacred Traditions & Ceremonies"
+                                className="admin-input"
+                                style={{ width: '100%', padding: '8px 10px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                              />
+                            </div>
+                          </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '10px' }}>
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 16px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
-                                    <Upload style={{ width: '14px', height: '14px' }} />
-                                    <span>Upload Video File (MP4/WebM)</span>
-                                    <input
-                                      type="file"
-                                      accept="video/mp4,video/webm"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => handleVideoFileChange(e, (videoDataUrl) => {
-                                        setHomeCms({
-                                          ...homeCms,
-                                          categories: {
-                                            ...homeCms.categories,
-                                            video360: { ...videoConfig, url: videoDataUrl }
-                                          }
-                                        });
-                                      })}
-                                    />
-                                  </label>
-                                  <span style={{ fontSize: '11px', color: '#777788' }}>
-                                    Max 25MB offline storage, or paste direct URL below:
-                                  </span>
+                          {/* Media Type Selector (Images, Videos, Both) */}
+                          <div style={{ marginBottom: '22px' }}>
+                            <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ff6a13', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                              Select Media Type for This Category
+                            </label>
+
+                            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '10px' }}>
+                              {[
+                                {
+                                  type: 'images',
+                                  label: 'Images Only',
+                                  desc: 'Upload rotating photo slides (uncropped responsive preview)',
+                                  icon: Camera,
+                                  accent: '#4ade80'
+                                },
+                                {
+                                  type: 'videos',
+                                  label: 'Videos Only',
+                                  desc: 'Cinematic video or 360 interactive motion player',
+                                  icon: Video,
+                                  accent: '#a78bfa'
+                                },
+                                {
+                                  type: 'both',
+                                  label: 'Both (Images & Videos)',
+                                  desc: 'Allows photo slides and cinematic video with switcher',
+                                  icon: Layers,
+                                  accent: '#fb923c'
+                                }
+                              ].map((opt) => {
+                                const isSelected = activeCat.mediaType === opt.type;
+                                const OptIcon = opt.icon;
+
+                                return (
+                                  <div
+                                    key={opt.type}
+                                    onClick={() => handleUpdateActiveCat({ mediaType: opt.type })}
+                                    style={{
+                                      padding: '12px',
+                                      borderRadius: '6px',
+                                      backgroundColor: isSelected ? 'rgba(255, 106, 19, 0.12)' : '#12121b',
+                                      border: isSelected ? '1.5px solid #ff6a13' : '1px solid #1f1f2c',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                                      <OptIcon style={{ width: '15px', height: '15px', color: isSelected ? '#ff6a13' : opt.accent }} />
+                                      <span style={{ fontSize: '12px', fontWeight: 700, color: isSelected ? '#fff' : '#ddd' }}>
+                                        {opt.label}
+                                      </span>
+                                    </div>
+                                    <p style={{ margin: 0, fontSize: '11px', color: '#888899', lineHeight: 1.35 }}>
+                                      {opt.desc}
+                                    </p>
+                                  </div>
+                                );
+                              })}
+                            </div>
+                          </div>
+
+                          {/* -------------------------------------------------- */}
+                          {/* 1. PHOTO SLIDES MANAGER (IF images or both)        */}
+                          {/* -------------------------------------------------- */}
+                          {isImages && (
+                            <div style={{ marginBottom: '24px', padding: '16px', backgroundColor: '#101018', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '8px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                  <Camera style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
+                                  <strong style={{ fontSize: '13px', color: '#fff' }}>
+                                    Rotating Photo Slides ({slides.length} Photos)
+                                  </strong>
                                 </div>
 
-                                <input
-                                  type="text"
-                                  value={videoConfig.url || ''}
-                                  placeholder="https://.../video.mp4"
-                                  onChange={(e) => setHomeCms({
-                                    ...homeCms,
-                                    categories: {
-                                      ...homeCms.categories,
-                                      video360: { ...videoConfig, url: e.target.value }
-                                    }
-                                  })}
-                                  className="admin-input"
-                                  style={{ width: '100%', padding: '8px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
-                                />
+                                <button
+                                  type="button"
+                                  onClick={handleAddSlideToActiveCat}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '6px',
+                                    padding: '6px 12px',
+                                    backgroundColor: '#1c1c28',
+                                    border: '1px solid #333346',
+                                    color: '#eee',
+                                    borderRadius: '4px',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Plus style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
+                                  <span>Add Another Slide</span>
+                                </button>
                               </div>
 
-                              {/* Video Poster Cover Image */}
-                              <div style={{ padding: '14px', backgroundColor: '#12121b', border: '1px solid #20202e', borderRadius: '6px' }}>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
-                                  Video Poster Image (Thumbnail before playback begins)
-                                </label>
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                                {slides.map((slide, sIdx) => (
+                                  <div
+                                    key={slide.id || sIdx}
+                                    style={{
+                                      padding: '12px 14px',
+                                      backgroundColor: '#14141e',
+                                      border: '1px solid #232334',
+                                      borderRadius: '6px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      gap: '12px',
+                                      flexWrap: 'wrap'
+                                    }}
+                                  >
+                                    {/* Thumbnail */}
+                                    <div style={{ position: 'relative' }}>
+                                      <img
+                                        src={slide.url}
+                                        alt={`Slide ${sIdx + 1}`}
+                                        style={{ width: '70px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                                      />
+                                      <span
+                                        style={{
+                                          position: 'absolute',
+                                          top: '2px',
+                                          left: '2px',
+                                          fontSize: '9px',
+                                          fontWeight: 700,
+                                          padding: '1px 4px',
+                                          backgroundColor: 'rgba(0,0,0,0.85)',
+                                          color: '#ff6a13',
+                                          borderRadius: '2px'
+                                        }}
+                                      >
+                                        #{sIdx + 1}
+                                      </span>
+                                    </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
-                                  {videoConfig.poster && (
-                                    <img
-                                      src={videoConfig.poster}
-                                      alt="Poster"
-                                      style={{ width: '74px', height: '52px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #2b2b3d' }}
-                                    />
-                                  )}
-                                  <div style={{ flex: 1, minWidth: '200px' }}>
-                                    <input
-                                      type="text"
-                                      value={videoConfig.poster || ''}
-                                      placeholder="Poster Image URL or upload file"
-                                      onChange={(e) => setHomeCms({
-                                        ...homeCms,
-                                        categories: {
-                                          ...homeCms.categories,
-                                          video360: { ...videoConfig, poster: e.target.value }
-                                        }
-                                      })}
-                                      className="admin-input"
-                                      style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
-                                    />
+                                    {/* Inputs */}
+                                    <div style={{ flex: 1, minWidth: '220px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                      <div style={{ display: 'flex', gap: '8px' }}>
+                                        <input
+                                          type="text"
+                                          value={slide.title || ''}
+                                          placeholder="Slide Title / Caption"
+                                          onChange={(e) => {
+                                            const updatedSlides = [...slides];
+                                            updatedSlides[sIdx] = { ...updatedSlides[sIdx], title: e.target.value };
+                                            handleUpdateActiveCat({ slides: updatedSlides });
+                                          }}
+                                          className="admin-input"
+                                          style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', fontSize: '11px' }}
+                                        />
+                                        <input
+                                          type="text"
+                                          value={slide.location || ''}
+                                          placeholder="Venue / Location"
+                                          onChange={(e) => {
+                                            const updatedSlides = [...slides];
+                                            updatedSlides[sIdx] = { ...updatedSlides[sIdx], location: e.target.value };
+                                            handleUpdateActiveCat({ slides: updatedSlides });
+                                          }}
+                                          className="admin-input"
+                                          style={{ flex: 1, padding: '5px 8px', borderRadius: '4px', fontSize: '11px' }}
+                                        />
+                                      </div>
+
+                                      <input
+                                        type="text"
+                                        value={slide.url || ''}
+                                        placeholder="Image URL or upload file"
+                                        onChange={(e) => {
+                                          const updatedSlides = [...slides];
+                                          updatedSlides[sIdx] = { ...updatedSlides[sIdx], url: e.target.value };
+                                          handleUpdateActiveCat({ slides: updatedSlides });
+                                        }}
+                                        className="admin-input"
+                                        style={{ width: '100%', padding: '5px 8px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                      />
+                                    </div>
+
+                                    {/* Buttons: Upload, Frame Editor, Delete */}
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '6px 10px', backgroundColor: '#1c1c28', border: '1px solid #333346', color: '#eee', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                                        <Upload style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
+                                        <span>Upload</span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          style={{ display: 'none' }}
+                                          onChange={(e) => handleImageFileChange(e, (dataUrl) => {
+                                            openHeroEditor(dataUrl, `${activeCat.title} - Slide ${sIdx + 1}`, (framedUrl) => {
+                                              const updatedSlides = [...slides];
+                                              updatedSlides[sIdx] = { ...updatedSlides[sIdx], url: framedUrl };
+                                              handleUpdateActiveCat({ slides: updatedSlides });
+                                            });
+                                          })}
+                                        />
+                                      </label>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => openHeroEditor(slide.url, `${activeCat.title} - Slide ${sIdx + 1}`, (framedUrl) => {
+                                          const updatedSlides = [...slides];
+                                          updatedSlides[sIdx] = { ...updatedSlides[sIdx], url: framedUrl };
+                                          handleUpdateActiveCat({ slides: updatedSlides });
+                                        })}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '5px',
+                                          padding: '6px 10px',
+                                          backgroundColor: '#1c1c28',
+                                          border: '1px solid #333346',
+                                          color: '#ff6a13',
+                                          borderRadius: '4px',
+                                          fontSize: '11px',
+                                          fontWeight: 600,
+                                          cursor: 'pointer',
+                                          whiteSpace: 'nowrap'
+                                        }}
+                                        title="Adjust framing, zoom, crop without distortion"
+                                      >
+                                        <Crop style={{ width: '12px', height: '12px' }} />
+                                        <span>Frame</span>
+                                      </button>
+
+                                      {slides.length > 1 && (
+                                        <button
+                                          type="button"
+                                          onClick={() => handleRemoveSlideFromActiveCat(sIdx)}
+                                          style={{
+                                            padding: '6px 8px',
+                                            backgroundColor: '#201215',
+                                            border: '1px solid #4a2128',
+                                            color: '#ff4444',
+                                            borderRadius: '4px',
+                                            cursor: 'pointer'
+                                          }}
+                                          title="Delete Slide"
+                                        >
+                                          <Trash2 style={{ width: '12px', height: '12px' }} />
+                                        </button>
+                                      )}
+                                    </div>
+                                  </div>
+                                ))}
+                              </div>
+                            </div>
+                          )}
+
+                          {/* -------------------------------------------------- */}
+                          {/* 2. VIDEO MANAGER (IF videos or both)               */}
+                          {/* -------------------------------------------------- */}
+                          {isVideos && (
+                            <div style={{ padding: '16px', backgroundColor: '#101018', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                                <Video style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
+                                <strong style={{ fontSize: '13px', color: '#fff' }}>
+                                  Cinematic Video & 360 Reel
+                                </strong>
+                              </div>
+
+                              {/* Interactive Live Video Preview */}
+                              {activeCat.videoUrl && (
+                                <div style={{ marginBottom: '14px', backgroundColor: '#07070a', border: '1px solid #20202e', borderRadius: '6px', overflow: 'hidden', padding: '10px' }}>
+                                  <span style={{ fontSize: '11px', color: '#888899', display: 'block', marginBottom: '6px', fontWeight: 600 }}>
+                                    Interactive Video Preview:
+                                  </span>
+                                  <video
+                                    key={activeCat.videoUrl}
+                                    src={activeCat.videoUrl}
+                                    poster={activeCat.videoPoster}
+                                    controls
+                                    muted
+                                    playsInline
+                                    style={{ width: '100%', maxHeight: '200px', borderRadius: '4px', backgroundColor: '#000', objectFit: 'contain' }}
+                                  />
+                                </div>
+                              )}
+
+                              {/* Video Source Controls */}
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <div>
+                                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ddd', marginBottom: '6px' }}>
+                                    Video Source (.mp4 / .webm File Upload or Direct URL)
+                                  </label>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '11px', fontWeight: 700, cursor: 'pointer' }}>
+                                      <Upload style={{ width: '13px', height: '13px' }} />
+                                      <span>Upload Video File (MP4/WebM)</span>
+                                      <input
+                                        type="file"
+                                        accept="video/mp4,video/webm"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => handleVideoFileChange(e, (videoDataUrl) => {
+                                          handleUpdateActiveCat({ videoUrl: videoDataUrl });
+                                        })}
+                                      />
+                                    </label>
+                                    <span style={{ fontSize: '11px', color: '#777788' }}>
+                                      Direct file upload (up to 25MB) or enter URL below:
+                                    </span>
                                   </div>
 
-                                  <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 12px', backgroundColor: '#181824', border: '1px solid #2e2e42', color: '#eee', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
-                                    <Upload style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
-                                    <span>Upload Poster</span>
-                                    <input
-                                      type="file"
-                                      accept="image/*"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                        setHomeCms({
-                                          ...homeCms,
-                                          categories: {
-                                            ...homeCms.categories,
-                                            video360: { ...videoConfig, poster: dataUrl }
-                                          }
-                                        });
-                                      })}
-                                    />
+                                  <input
+                                    type="text"
+                                    value={activeCat.videoUrl || ''}
+                                    placeholder="https://.../video.mp4"
+                                    onChange={(e) => handleUpdateActiveCat({ videoUrl: e.target.value })}
+                                    className="admin-input"
+                                    style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                  />
+                                </div>
+
+                                {/* Poster Thumbnail */}
+                                <div>
+                                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ddd', marginBottom: '6px' }}>
+                                    Video Poster Image (Thumbnail before play)
                                   </label>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                                    {activeCat.videoPoster && (
+                                      <img
+                                        src={activeCat.videoPoster}
+                                        alt="Poster"
+                                        style={{ width: '60px', height: '42px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                        onClick={() => openHeroEditor(activeCat.videoPoster, `${activeCat.title} - Video Poster`, (framedUrl) => {
+                                          handleUpdateActiveCat({ videoPoster: framedUrl });
+                                        })}
+                                        title="Click to adjust position in Preview Editor"
+                                      />
+                                    )}
+                                    <input
+                                      type="text"
+                                      value={activeCat.videoPoster || ''}
+                                      placeholder="Poster Image URL"
+                                      onChange={(e) => handleUpdateActiveCat({ videoPoster: e.target.value })}
+                                      className="admin-input"
+                                      style={{ flex: 1, minWidth: '200px', padding: '7px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                    />
+                                    <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', backgroundColor: '#181824', border: '1px solid #2e2e42', color: '#eee', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                                      <Upload style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
+                                      <span>Upload Poster</span>
+                                      <input
+                                        type="file"
+                                        accept="image/*"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => handleImageFileChange(e, (dataUrl) => {
+                                          openHeroEditor(dataUrl, `${activeCat.title} - Video Poster`, (framedUrl) => {
+                                            handleUpdateActiveCat({ videoPoster: framedUrl });
+                                          });
+                                        })}
+                                      />
+                                    </label>
+                                    {activeCat.videoPoster && (
+                                      <button
+                                        type="button"
+                                        onClick={() => openHeroEditor(activeCat.videoPoster, `${activeCat.title} - Video Poster`, (framedUrl) => {
+                                          handleUpdateActiveCat({ videoPoster: framedUrl });
+                                        })}
+                                        style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 12px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                        title="Adjust framing, zoom, and position"
+                                      >
+                                        <Crop style={{ width: '12px', height: '12px' }} />
+                                        <span>Adjust & Frame</span>
+                                      </button>
+                                    )}
+                                  </div>
+                                </div>
+
+                                {/* Video Caption */}
+                                <div>
+                                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ddd', marginBottom: '6px' }}>
+                                    Video Overlay Caption / Title
+                                  </label>
+                                  <input
+                                    type="text"
+                                    value={activeCat.videoTitle || ''}
+                                    placeholder="e.g. 360° Cinematic Reel"
+                                    onChange={(e) => handleUpdateActiveCat({ videoTitle: e.target.value })}
+                                    className="admin-input"
+                                    style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                  />
                                 </div>
                               </div>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
 
-                              {/* Video Title */}
-                              <div style={{ padding: '14px', backgroundColor: '#12121b', border: '1px solid #20202e', borderRadius: '6px' }}>
-                                <label style={{ display: 'block', fontSize: '12px', fontWeight: 600, color: '#fff', marginBottom: '6px' }}>
-                                  Column 5 Overlay Title & Caption
-                                </label>
-                                <input
-                                  type="text"
-                                  value={videoConfig.title || '360° Cinematic Experience'}
-                                  placeholder="e.g. 360° Cinematic Experience"
-                                  onChange={(e) => setHomeCms({
-                                    ...homeCms,
-                                    categories: {
-                                      ...homeCms.categories,
-                                      video360: { ...videoConfig, title: e.target.value }
-                                    }
-                                  })}
-                                  className="admin-input"
-                                  style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
-                                />
+                    {/* Modal: Add New Category Dialog */}
+                    {showAddCatModal && (
+                      <div 
+                        style={{
+                          position: 'fixed',
+                          inset: 0,
+                          backgroundColor: 'rgba(0, 0, 0, 0.85)',
+                          backdropFilter: 'blur(8px)',
+                          zIndex: 9999,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          padding: '16px'
+                        }}
+                      >
+                        <div 
+                          style={{
+                            width: '100%',
+                            maxWidth: '520px',
+                            backgroundColor: '#0d0d14',
+                            border: '1px solid #2e2e42',
+                            borderRadius: '10px',
+                            padding: '24px',
+                            boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
+                          }}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                              <Plus style={{ width: '18px', height: '18px', color: '#ff6a13' }} />
+                              <h3 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: 700 }}>
+                                Create New Category
+                              </h3>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddCatModal(false)}
+                              style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
+                            >
+                              <X style={{ width: '18px', height: '18px' }} />
+                            </button>
+                          </div>
+
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '22px' }}>
+                            <div>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ddd', marginBottom: '6px' }}>
+                                Category Name / Title *
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Fine Art Portraits, Drone Cinematography, Maternity"
+                                value={newCatForm.title}
+                                onChange={(e) => setNewCatForm({ ...newCatForm, title: e.target.value })}
+                                className="admin-input"
+                                style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
+                                autoFocus
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ddd', marginBottom: '6px' }}>
+                                Subtitle / Venue Tagline
+                              </label>
+                              <input
+                                type="text"
+                                placeholder="e.g. Studio & Natural Light Heirloom Portraits"
+                                value={newCatForm.subtitle}
+                                onChange={(e) => setNewCatForm({ ...newCatForm, subtitle: e.target.value })}
+                                className="admin-input"
+                                style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
+                              />
+                            </div>
+
+                            <div>
+                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ff6a13', marginBottom: '6px' }}>
+                                Media Format Type
+                              </label>
+                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+                                {[
+                                  { type: 'images', label: 'Images', icon: Camera },
+                                  { type: 'videos', label: 'Videos', icon: Video },
+                                  { type: 'both', label: 'Both', icon: Layers }
+                                ].map((m) => {
+                                  const isSel = newCatForm.mediaType === m.type;
+                                  const MIcon = m.icon;
+                                  return (
+                                    <button
+                                      key={m.type}
+                                      type="button"
+                                      onClick={() => setNewCatForm({ ...newCatForm, mediaType: m.type })}
+                                      style={{
+                                        display: 'flex',
+                                        flexDirection: 'column',
+                                        alignItems: 'center',
+                                        gap: '6px',
+                                        padding: '12px 8px',
+                                        borderRadius: '6px',
+                                        backgroundColor: isSel ? 'rgba(255, 106, 19, 0.15)' : '#14141e',
+                                        border: isSel ? '1.5px solid #ff6a13' : '1px solid #232334',
+                                        color: isSel ? '#ff6a13' : '#aaa',
+                                        cursor: 'pointer'
+                                      }}
+                                    >
+                                      <MIcon style={{ width: '16px', height: '16px' }} />
+                                      <span style={{ fontSize: '11px', fontWeight: 600 }}>{m.label}</span>
+                                    </button>
+                                  );
+                                })}
                               </div>
                             </div>
                           </div>
-                        );
-                      })()}
-                    </div>
+
+                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
+                            <button
+                              type="button"
+                              onClick={() => setShowAddCatModal(false)}
+                              style={{
+                                padding: '9px 16px',
+                                backgroundColor: '#1a1a26',
+                                border: '1px solid #333346',
+                                color: '#ccc',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 600,
+                                cursor: 'pointer'
+                              }}
+                            >
+                              Cancel
+                            </button>
+                            <button
+                              type="button"
+                              onClick={handleAddCategory}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '6px',
+                                padding: '9px 20px',
+                                backgroundColor: '#ff6a13',
+                                border: 'none',
+                                color: '#fff',
+                                borderRadius: '6px',
+                                fontSize: '12px',
+                                fontWeight: 700,
+                                cursor: 'pointer',
+                                boxShadow: '0 4px 14px rgba(255, 106, 19, 0.4)'
+                              }}
+                            >
+                              <Plus style={{ width: '14px', height: '14px' }} />
+                              <span>Create Category</span>
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
 
                   {/* --------------------------------------------------------- */}
@@ -1495,10 +2144,7 @@ export default function AdminPage() {
                             type="radio"
                             name="storyBgType"
                             checked={homeCms.story.bgType === 'custom'}
-                            onChange={() => setHomeCms({
-                              ...homeCms,
-                              story: { ...homeCms.story, bgType: 'custom' }
-                            })}
+                            onChange={() => saveAndPublishStoryUpdate({ bgType: 'custom' })}
                             style={{ accentColor: '#ff6a13' }}
                           />
                           <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
@@ -1507,12 +2153,16 @@ export default function AdminPage() {
 
                       {homeCms.story.bgType === 'custom' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '10px', borderTop: '1px solid #1e1e2d' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             {homeCms.story.customBgImage && (
                               <img
                                 src={homeCms.story.customBgImage}
                                 alt="Story Bg Preview"
-                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                onClick={() => openHeroEditor(homeCms.story.customBgImage, 'Adjust Story Section Background', (croppedUrl) => {
+                                  saveAndPublishStoryUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                title="Click to adjust position in Preview Editor"
                               />
                             )}
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
@@ -1523,30 +2173,32 @@ export default function AdminPage() {
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                  setHomeCms({
-                                    ...homeCms,
-                                    story: { 
-                                      ...homeCms.story, 
-                                      bgType: 'custom', 
-                                      customBgImage: dataUrl 
-                                    }
+                                  openHeroEditor(dataUrl, 'Adjust Story Section Background', (croppedUrl) => {
+                                    saveAndPublishStoryUpdate({ bgType: 'custom', customBgImage: croppedUrl });
                                   });
                                 })}
                               />
                             </label>
 
+                            {homeCms.story.customBgImage && (
+                              <button
+                                type="button"
+                                onClick={() => openHeroEditor(homeCms.story.customBgImage, 'Adjust Story Section Background', (croppedUrl) => {
+                                  saveAndPublishStoryUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                title="Adjust framing, zoom, and position"
+                              >
+                                <Crop style={{ width: '13px', height: '13px' }} />
+                                <span>Adjust & Frame Position</span>
+                              </button>
+                            )}
+
                             <input
                               type="text"
                               placeholder="Or paste background image URL..."
-                              value={homeCms.story.customBgImage}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                story: { 
-                                  ...homeCms.story, 
-                                  bgType: 'custom', 
-                                  customBgImage: e.target.value 
-                                }
-                              })}
+                              value={homeCms.story.customBgImage || ''}
+                              onChange={(e) => saveAndPublishStoryUpdate({ bgType: 'custom', customBgImage: e.target.value })}
                               className="admin-input"
                               style={{ flex: 1, minWidth: '220px', padding: '8px 12px', borderRadius: '4px', fontSize: '12px' }}
                             />
@@ -1560,10 +2212,7 @@ export default function AdminPage() {
                               max="0.80"
                               step="0.05"
                               value={homeCms.story.bgOpacity !== undefined ? homeCms.story.bgOpacity : 0.40}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                story: { ...homeCms.story, bgOpacity: parseFloat(e.target.value) }
-                              })}
+                              onChange={(e) => saveAndPublishStoryUpdate({ bgOpacity: parseFloat(e.target.value) })}
                               style={{ width: '160px', accentColor: '#ff6a13' }}
                             />
                             <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace', fontWeight: 600 }}>
@@ -1591,7 +2240,11 @@ export default function AdminPage() {
                           <img
                             src={homeCms.story.featuredImage}
                             alt="Story Featured Preview"
-                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain' }}
+                            style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', cursor: 'pointer' }}
+                            onClick={() => openHeroEditor(homeCms.story.featuredImage, 'Adjust Story Featured Image', (croppedUrl) => {
+                              saveAndPublishStoryUpdate({ featuredImage: croppedUrl });
+                            })}
+                            title="Click to adjust position in Preview Editor"
                           />
                           <span style={{ position: 'absolute', bottom: '2px', right: '2px', fontSize: '9px', padding: '1px 4px', backgroundColor: 'rgba(0,0,0,0.85)', color: '#ff6a13', borderRadius: '2px', fontWeight: 700 }}>
                             FULL PREVIEW
@@ -1605,28 +2258,40 @@ export default function AdminPage() {
                           <input
                             type="text"
                             value={homeCms.story.featuredImage}
-                            onChange={(e) => setHomeCms({
-                              ...homeCms,
-                              story: { ...homeCms.story, featuredImage: e.target.value }
-                            })}
+                            onChange={(e) => saveAndPublishStoryUpdate({ featuredImage: e.target.value })}
                             className="admin-input"
-                            style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', marginBottom: '8px' }}
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', marginBottom: '10px' }}
                           />
-                          <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
-                            <Upload style={{ width: '12px', height: '12px' }} />
-                            <span>Upload Image File (Portrait or Landscape)</span>
-                            <input
-                              type="file"
-                              accept="image/*"
-                              style={{ display: 'none' }}
-                              onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                setHomeCms({
-                                  ...homeCms,
-                                  story: { ...homeCms.story, featuredImage: dataUrl }
-                                });
-                              })}
-                            />
-                          </label>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                              <Upload style={{ width: '12px', height: '12px' }} />
+                              <span>Upload Image File</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={(e) => handleImageFileChange(e, (dataUrl) => {
+                                  openHeroEditor(dataUrl, 'Adjust Story Featured Image', (croppedUrl) => {
+                                    saveAndPublishStoryUpdate({ featuredImage: croppedUrl });
+                                  });
+                                })}
+                              />
+                            </label>
+
+                            {homeCms.story.featuredImage && (
+                              <button
+                                type="button"
+                                onClick={() => openHeroEditor(homeCms.story.featuredImage, 'Adjust Story Featured Image', (croppedUrl) => {
+                                  saveAndPublishStoryUpdate({ featuredImage: croppedUrl });
+                                })}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '5px', padding: '7px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                title="Adjust framing, zoom, and position"
+                              >
+                                <Crop style={{ width: '12px', height: '12px' }} />
+                                <span>Adjust & Frame Position</span>
+                              </button>
+                            )}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -1669,10 +2334,7 @@ export default function AdminPage() {
                             type="radio"
                             name="reviewsBgType"
                             checked={homeCms.reviews.bgType === 'custom'}
-                            onChange={() => setHomeCms({
-                              ...homeCms,
-                              reviews: { ...homeCms.reviews, bgType: 'custom' }
-                            })}
+                            onChange={() => saveAndPublishReviewsUpdate({ bgType: 'custom' })}
                             style={{ accentColor: '#ff6a13' }}
                           />
                           <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
@@ -1681,12 +2343,16 @@ export default function AdminPage() {
 
                       {homeCms.reviews.bgType === 'custom' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '10px', borderTop: '1px solid #1e1e2d' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             {homeCms.reviews.customBgImage && (
                               <img
                                 src={homeCms.reviews.customBgImage}
                                 alt="Reviews Bg Preview"
-                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                onClick={() => openHeroEditor(homeCms.reviews.customBgImage, 'Adjust Reviews Section Background', (croppedUrl) => {
+                                  saveAndPublishReviewsUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                title="Click to adjust position in Preview Editor"
                               />
                             )}
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
@@ -1697,30 +2363,32 @@ export default function AdminPage() {
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                  setHomeCms({
-                                    ...homeCms,
-                                    reviews: { 
-                                      ...homeCms.reviews, 
-                                      bgType: 'custom', 
-                                      customBgImage: dataUrl 
-                                    }
+                                  openHeroEditor(dataUrl, 'Adjust Reviews Section Background', (croppedUrl) => {
+                                    saveAndPublishReviewsUpdate({ bgType: 'custom', customBgImage: croppedUrl });
                                   });
                                 })}
                               />
                             </label>
 
+                            {homeCms.reviews.customBgImage && (
+                              <button
+                                type="button"
+                                onClick={() => openHeroEditor(homeCms.reviews.customBgImage, 'Adjust Reviews Section Background', (croppedUrl) => {
+                                  saveAndPublishReviewsUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                title="Adjust framing, zoom, and position"
+                              >
+                                <Crop style={{ width: '13px', height: '13px' }} />
+                                <span>Adjust & Frame Position</span>
+                              </button>
+                            )}
+
                             <input
                               type="text"
                               placeholder="Or paste background image URL..."
-                              value={homeCms.reviews.customBgImage}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                reviews: { 
-                                  ...homeCms.reviews, 
-                                  bgType: 'custom', 
-                                  customBgImage: e.target.value 
-                                }
-                              })}
+                              value={homeCms.reviews.customBgImage || ''}
+                              onChange={(e) => saveAndPublishReviewsUpdate({ bgType: 'custom', customBgImage: e.target.value })}
                               className="admin-input"
                               style={{ flex: 1, minWidth: '220px', padding: '8px 12px', borderRadius: '4px', fontSize: '12px' }}
                             />
@@ -1734,10 +2402,7 @@ export default function AdminPage() {
                               max="0.80"
                               step="0.05"
                               value={homeCms.reviews.bgOpacity !== undefined ? homeCms.reviews.bgOpacity : 0.40}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                reviews: { ...homeCms.reviews, bgOpacity: parseFloat(e.target.value) }
-                              })}
+                              onChange={(e) => saveAndPublishReviewsUpdate({ bgOpacity: parseFloat(e.target.value) })}
                               style={{ width: '160px', accentColor: '#ff6a13' }}
                             />
                             <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace', fontWeight: 600 }}>
@@ -1787,10 +2452,7 @@ export default function AdminPage() {
                             type="radio"
                             name="calloutBgType"
                             checked={homeCms.callout.bgType === 'custom'}
-                            onChange={() => setHomeCms({
-                              ...homeCms,
-                              callout: { ...homeCms.callout, bgType: 'custom' }
-                            })}
+                            onChange={() => saveAndPublishCalloutUpdate({ bgType: 'custom' })}
                             style={{ accentColor: '#ff6a13' }}
                           />
                           <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
@@ -1799,12 +2461,16 @@ export default function AdminPage() {
 
                       {homeCms.callout.bgType === 'custom' && (
                         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '10px', borderTop: '1px solid #1e1e2d' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '14px', flexWrap: 'wrap' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
                             {homeCms.callout.customBgImage && (
                               <img
                                 src={homeCms.callout.customBgImage}
                                 alt="Callout Bg Preview"
-                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                                style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                onClick={() => openHeroEditor(homeCms.callout.customBgImage, 'Adjust Callout Banner Background', (croppedUrl) => {
+                                  saveAndPublishCalloutUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                title="Click to adjust position in Preview Editor"
                               />
                             )}
                             <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
@@ -1815,30 +2481,32 @@ export default function AdminPage() {
                                 accept="image/*"
                                 style={{ display: 'none' }}
                                 onChange={(e) => handleImageFileChange(e, (dataUrl) => {
-                                  setHomeCms({
-                                    ...homeCms,
-                                    callout: { 
-                                      ...homeCms.callout, 
-                                      bgType: 'custom', 
-                                      customBgImage: dataUrl 
-                                    }
+                                  openHeroEditor(dataUrl, 'Adjust Callout Banner Background', (croppedUrl) => {
+                                    saveAndPublishCalloutUpdate({ bgType: 'custom', customBgImage: croppedUrl });
                                   });
                                 })}
                               />
                             </label>
 
+                            {homeCms.callout.customBgImage && (
+                              <button
+                                type="button"
+                                onClick={() => openHeroEditor(homeCms.callout.customBgImage, 'Adjust Callout Banner Background', (croppedUrl) => {
+                                  saveAndPublishCalloutUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                title="Adjust framing, zoom, and position"
+                              >
+                                <Crop style={{ width: '13px', height: '13px' }} />
+                                <span>Adjust & Frame Position</span>
+                              </button>
+                            )}
+
                             <input
                               type="text"
                               placeholder="Or paste background image URL..."
-                              value={homeCms.callout.customBgImage}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                callout: { 
-                                  ...homeCms.callout, 
-                                  bgType: 'custom', 
-                                  customBgImage: e.target.value 
-                                }
-                              })}
+                              value={homeCms.callout.customBgImage || ''}
+                              onChange={(e) => saveAndPublishCalloutUpdate({ bgType: 'custom', customBgImage: e.target.value })}
                               className="admin-input"
                               style={{ flex: 1, minWidth: '220px', padding: '8px 12px', borderRadius: '4px', fontSize: '12px' }}
                             />
@@ -1852,10 +2520,7 @@ export default function AdminPage() {
                               max="0.80"
                               step="0.05"
                               value={homeCms.callout.bgOpacity !== undefined ? homeCms.callout.bgOpacity : 0.40}
-                              onChange={(e) => setHomeCms({
-                                ...homeCms,
-                                callout: { ...homeCms.callout, bgOpacity: parseFloat(e.target.value) }
-                              })}
+                              onChange={(e) => saveAndPublishCalloutUpdate({ bgOpacity: parseFloat(e.target.value) })}
                               style={{ width: '160px', accentColor: '#ff6a13' }}
                             />
                             <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace', fontWeight: 600 }}>
@@ -2165,45 +2830,99 @@ export default function AdminPage() {
                                 </div>
                               </div>
 
-                              {/* Photo Uploader & Layout Position */}
+                              {/* 1. Layout Alignment Selector (Photo Left vs Photo Right) */}
                               <div style={{ padding: '16px', backgroundColor: '#11111b', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
-                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
-                                  <strong style={{ fontSize: '12px', color: '#fff', textTransform: 'uppercase', fontFamily: 'monospace' }}>
-                                    Section Photo & Layout Alignment
-                                  </strong>
+                                <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ff6a13', marginBottom: '8px', letterSpacing: '0.05em' }}>
+                                  Section Column Alignment (Choose Photo Side)
+                                </label>
+                                <p style={{ margin: '0 0 12px 0', fontSize: '11px', color: '#888899' }}>
+                                  Select whether the photo appears on the Left or Right side. The narrative content will automatically sit on the opposite side.
+                                </p>
 
-                                  {/* Position Toggle */}
-                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#ddd', cursor: 'pointer' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '12px' }}>
+                                  {/* Left Card: Photo on Left */}
+                                  <div
+                                    onClick={() => {
+                                      const newSections = [...aboutCms.sections];
+                                      newSections[idx] = { ...newSections[idx], imagePosition: 'left' };
+                                      saveAndPublishAboutUpdate({ sections: newSections });
+                                    }}
+                                    style={{
+                                      padding: '12px 14px',
+                                      borderRadius: '6px',
+                                      backgroundColor: isImageLeft ? 'rgba(255, 106, 19, 0.12)' : '#141420',
+                                      border: isImageLeft ? '1.5px solid #ff6a13' : '1px solid #232334',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '14px', color: '#ff6a13' }}>◧</span>
+                                        <span style={{ fontSize: '12px', fontWeight: 700, color: isImageLeft ? '#fff' : '#ccc' }}>
+                                          Photo on Left Side
+                                        </span>
+                                      </div>
                                       <input
                                         type="radio"
                                         name={`pos-${idx}`}
                                         checked={isImageLeft}
-                                        onChange={() => {
-                                          const newSections = [...aboutCms.sections];
-                                          newSections[idx] = { ...newSections[idx], imagePosition: 'left' };
-                                          saveAndPublishAboutUpdate({ sections: newSections });
-                                        }}
+                                        onChange={() => {}}
                                         style={{ accentColor: '#ff6a13' }}
                                       />
-                                      <span>Image Left, Text Right</span>
-                                    </label>
+                                    </div>
+                                    <span style={{ fontSize: '11px', color: '#888899', display: 'block' }}>
+                                      Left: <strong>Photo (50%)</strong> • Right: <strong>Story Text (50%)</strong>
+                                    </span>
+                                  </div>
 
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '11px', color: '#ddd', cursor: 'pointer' }}>
+                                  {/* Right Card: Photo on Right */}
+                                  <div
+                                    onClick={() => {
+                                      const newSections = [...aboutCms.sections];
+                                      newSections[idx] = { ...newSections[idx], imagePosition: 'right' };
+                                      saveAndPublishAboutUpdate({ sections: newSections });
+                                    }}
+                                    style={{
+                                      padding: '12px 14px',
+                                      borderRadius: '6px',
+                                      backgroundColor: !isImageLeft ? 'rgba(255, 106, 19, 0.12)' : '#141420',
+                                      border: !isImageLeft ? '1.5px solid #ff6a13' : '1px solid #232334',
+                                      cursor: 'pointer',
+                                      transition: 'all 0.15s ease'
+                                    }}
+                                  >
+                                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <span style={{ fontSize: '14px', color: '#ff6a13' }}>◨</span>
+                                        <span style={{ fontSize: '12px', fontWeight: 700, color: !isImageLeft ? '#fff' : '#ccc' }}>
+                                          Photo on Right Side
+                                        </span>
+                                      </div>
                                       <input
                                         type="radio"
                                         name={`pos-${idx}`}
                                         checked={!isImageLeft}
-                                        onChange={() => {
-                                          const newSections = [...aboutCms.sections];
-                                          newSections[idx] = { ...newSections[idx], imagePosition: 'right' };
-                                          saveAndPublishAboutUpdate({ sections: newSections });
-                                        }}
+                                        onChange={() => {}}
                                         style={{ accentColor: '#ff6a13' }}
                                       />
-                                      <span>Text Left, Image Right</span>
-                                    </label>
+                                    </div>
+                                    <span style={{ fontSize: '11px', color: '#888899', display: 'block' }}>
+                                      Left: <strong>Story Text (50%)</strong> • Right: <strong>Photo (50%)</strong>
+                                    </span>
                                   </div>
+                                </div>
+                              </div>
+
+                              {/* 2. Section Photo Uploader & Framing */}
+                              <div style={{ padding: '16px', backgroundColor: '#11111b', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '10px' }}>
+                                  <strong style={{ fontSize: '12px', color: '#fff', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                                    Section Featured Story Photo
+                                  </strong>
+                                  <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace' }}>
+                                    Auto-adapts to Portrait or Landscape
+                                  </span>
                                 </div>
 
                                 <div style={{ display: 'flex', alignItems: 'center', gap: '16px', flexWrap: 'wrap' }}>
@@ -2248,7 +2967,7 @@ export default function AdminPage() {
                                         style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
                                       >
                                         <Crop style={{ width: '12px', height: '12px' }} />
-                                        <span>Adjust & Frame (Preview Editor)</span>
+                                        <span>Adjust & Frame Position</span>
                                       </button>
                                     </div>
 
@@ -2266,6 +2985,135 @@ export default function AdminPage() {
                                     />
                                   </div>
                                 </div>
+                              </div>
+
+                              {/* 3. Section Background Controller (Default Black vs Custom Background Image) */}
+                              <div style={{ padding: '16px', backgroundColor: '#11111b', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                                  <Palette style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
+                                  <strong style={{ fontSize: '12px', color: '#fff', textTransform: 'uppercase', fontFamily: 'monospace' }}>
+                                    Section Background Theme
+                                  </strong>
+                                </div>
+
+                                <div style={{ display: 'flex', gap: '16px', marginBottom: '12px', flexWrap: 'wrap' }}>
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#ddd', cursor: 'pointer' }}>
+                                    <input
+                                      type="radio"
+                                      name={`bgType-${idx}`}
+                                      checked={!section.bgType || section.bgType === 'default'}
+                                      onChange={() => {
+                                        const newSections = [...aboutCms.sections];
+                                        newSections[idx] = { ...newSections[idx], bgType: 'default' };
+                                        saveAndPublishAboutUpdate({ sections: newSections });
+                                      }}
+                                      style={{ accentColor: '#ff6a13' }}
+                                    />
+                                    <span>Default Solid Black Theme (#060608)</span>
+                                  </label>
+
+                                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '12px', color: '#ddd', cursor: 'pointer' }}>
+                                    <input
+                                      type="radio"
+                                      name={`bgType-${idx}`}
+                                      checked={section.bgType === 'custom'}
+                                      onChange={() => {
+                                        const newSections = [...aboutCms.sections];
+                                        newSections[idx] = { ...newSections[idx], bgType: 'custom' };
+                                        saveAndPublishAboutUpdate({ sections: newSections });
+                                      }}
+                                      style={{ accentColor: '#ff6a13' }}
+                                    />
+                                    <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
+                                  </label>
+                                </div>
+
+                                {section.bgType === 'custom' && (
+                                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', paddingTop: '10px', borderTop: '1px solid #1e1e2d' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap' }}>
+                                      {section.customBgImage && (
+                                        <img
+                                          src={section.customBgImage}
+                                          alt="Section Bg Preview"
+                                          style={{ width: '90px', height: '54px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                          onClick={() => openHeroEditor(section.customBgImage, `Adjust Background for Section ${idx + 1}: ${section.title}`, (croppedUrl) => {
+                                            const newSections = [...aboutCms.sections];
+                                            newSections[idx] = { ...newSections[idx], bgType: 'custom', customBgImage: croppedUrl };
+                                            saveAndPublishAboutUpdate({ sections: newSections });
+                                          })}
+                                          title="Click to adjust position in Preview Editor"
+                                        />
+                                      )}
+
+                                      <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                                        <Upload style={{ width: '13px', height: '13px' }} />
+                                        <span>Upload Background Image File</span>
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          style={{ display: 'none' }}
+                                          onChange={(e) => handleImageFileChange(e, (dataUrl) => {
+                                            openHeroEditor(dataUrl, `Adjust Background for Section ${idx + 1}: ${section.title}`, (croppedUrl) => {
+                                              const newSections = [...aboutCms.sections];
+                                              newSections[idx] = { ...newSections[idx], bgType: 'custom', customBgImage: croppedUrl };
+                                              saveAndPublishAboutUpdate({ sections: newSections });
+                                            });
+                                          })}
+                                        />
+                                      </label>
+
+                                      {section.customBgImage && (
+                                        <button
+                                          type="button"
+                                          onClick={() => openHeroEditor(section.customBgImage, `Adjust Background for Section ${idx + 1}: ${section.title}`, (croppedUrl) => {
+                                            const newSections = [...aboutCms.sections];
+                                            newSections[idx] = { ...newSections[idx], bgType: 'custom', customBgImage: croppedUrl };
+                                            saveAndPublishAboutUpdate({ sections: newSections });
+                                          })}
+                                          style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 14px', backgroundColor: '#181824', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}
+                                          title="Adjust framing, zoom, and position"
+                                        >
+                                          <Crop style={{ width: '13px', height: '13px' }} />
+                                          <span>Adjust & Frame Position</span>
+                                        </button>
+                                      )}
+
+                                      <input
+                                        type="text"
+                                        placeholder="Or paste background image URL..."
+                                        value={section.customBgImage || ''}
+                                        onChange={(e) => {
+                                          const newSections = [...aboutCms.sections];
+                                          newSections[idx] = { ...newSections[idx], bgType: 'custom', customBgImage: e.target.value };
+                                          saveAndPublishAboutUpdate({ sections: newSections });
+                                        }}
+                                        className="admin-input"
+                                        style={{ flex: 1, minWidth: '220px', padding: '8px 12px', borderRadius: '4px', fontSize: '12px' }}
+                                      />
+                                    </div>
+
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '14px', marginTop: '6px', flexWrap: 'wrap' }}>
+                                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Darkness Overlay:</span>
+                                      <input
+                                        type="range"
+                                        min="0"
+                                        max="0.80"
+                                        step="0.05"
+                                        value={section.bgOpacity !== undefined ? section.bgOpacity : 0.40}
+                                        onChange={(e) => {
+                                          const newSections = [...aboutCms.sections];
+                                          newSections[idx] = { ...newSections[idx], bgOpacity: parseFloat(e.target.value) };
+                                          saveAndPublishAboutUpdate({ sections: newSections });
+                                        }}
+                                        style={{ width: '160px', accentColor: '#ff6a13' }}
+                                      />
+                                      <span style={{ fontSize: '11px', color: '#ff6a13', fontFamily: 'monospace', fontWeight: 600 }}>
+                                        {Math.round((section.bgOpacity !== undefined ? section.bgOpacity : 0.40) * 100)}% Darkness
+                                        {(section.bgOpacity ?? 0.40) <= 0.40 ? ' (Clear & Vibrant)' : ''}
+                                      </span>
+                                    </div>
+                                  </div>
+                                )}
                               </div>
 
                               {/* Rich Text Editor for Narrative Story */}

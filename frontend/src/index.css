@@ -2397,4 +2397,109 @@
   transform: translateX(-4px) scale(1.15) !important;
 }
 
+/* ========================================================
+   ABOUT US 2-COLUMN SIDE-BY-SIDE RESPONSIVE SYSTEM
+   ======================================================== */
+@media (min-width: 768px) {
+  .about-two-col-grid,
+  .md\:grid-cols-2 {
+    display: grid !important;
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    gap: 3.5rem !important;
+    align-items: center !important;
+  }
+  .about-col-order-1,
+  .md\:order-1 {
+    order: 1 !important;
+  }
+  .about-col-order-2,
+  .md\:order-2 {
+    order: 2 !important;
+  }
+}
+
+@media (max-width: 767px) {
+  .about-two-col-grid {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2rem !important;
+  }
+  .about-col-order-1,
+  .about-col-order-2 {
+    order: unset !important;
+  }
+}
+
+/* About Us Hero & Section Responsive Polish */
+.about-hero-header {
+  padding-top: 7.5rem !important;
+  padding-bottom: 3.5rem !important;
+}
+@media (min-width: 640px) {
+  .about-hero-header {
+    padding-top: 9.5rem !important;
+    padding-bottom: 4.5rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .about-hero-header {
+    padding-top: 11.5rem !important;
+    padding-bottom: 6rem !important;
+  }
+}
+
+.about-section-spacing {
+  padding-top: 3.5rem !important;
+  padding-bottom: 3.5rem !important;
+}
+@media (min-width: 640px) {
+  .about-section-spacing {
+    padding-top: 5rem !important;
+    padding-bottom: 5rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .about-section-spacing {
+    padding-top: 6.5rem !important;
+    padding-bottom: 6.5rem !important;
+  }
+}
+
+.about-hero-title {
+  font-family: Cormorant Garamond, Georgia, serif !important;
+  font-size: 2.15rem !important;
+  line-height: 1.15 !important;
+  font-weight: 300 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.02em !important;
+}
+@media (min-width: 640px) {
+  .about-hero-title {
+    font-size: 3.25rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .about-hero-title {
+    font-size: 4.5rem !important;
+  }
+}
+
+.about-section-title {
+  font-family: Cormorant Garamond, Georgia, serif !important;
+  font-size: 1.85rem !important;
+  line-height: 1.2 !important;
+  font-weight: 300 !important;
+  color: #ffffff !important;
+  letter-spacing: -0.02em !important;
+}
+@media (min-width: 640px) {
+  .about-section-title {
+    font-size: 2.5rem !important;
+  }
+}
+@media (min-width: 1024px) {
+  .about-section-title {
+    font-size: 3.25rem !important;
+  }
+}
 

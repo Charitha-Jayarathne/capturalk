@@ -89,6 +89,9 @@ function mergeAboutContent(saved = {}) {
           tagline: sec.tagline || '',
           image: sec.image || DEFAULT_ABOUT_CONTENT.sections[0].image,
           imagePosition: sec.imagePosition || (idx % 2 === 0 ? 'left' : 'right'),
+          bgType: sec.bgType || 'default',
+          customBgImage: sec.customBgImage || '',
+          bgOpacity: sec.bgOpacity !== undefined ? sec.bgOpacity : 0.40,
           quote: sec.quote || '',
           richContent: sec.richContent || '',
           stats: Array.isArray(sec.stats) ? sec.stats : []

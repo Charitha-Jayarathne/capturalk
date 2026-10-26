@@ -3,7 +3,7 @@ import Hero from '../components/Hero';
 import CategoryShowcase from '../components/CategoryShowcase';
 import StorySection from '../components/StorySection';
 import RevealOnScroll from '../components/RevealOnScroll';
-import { Star, ShieldCheck } from 'lucide-react';
+import { Star, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHomeContent, getHomeContentAsync } from '../utils/homeContentService';
 
@@ -186,9 +186,22 @@ export default function Home({ onOpenBooking }) {
             <div className="flex items-center justify-center">
               <Link
                 to="/contact"
-                className="inline-block px-10 py-4 bg-[#ff6a13] hover:bg-[#e05300] text-white text-xs tracking-[0.25em] uppercase font-semibold transition-all duration-300 shadow-md cursor-pointer hover:scale-105"
+                className="group relative inline-flex items-center gap-3.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-white text-xs sm:text-[13px] tracking-[0.22em] uppercase font-semibold transition-all duration-300 hover:scale-105 active:scale-[0.98] overflow-hidden cursor-pointer"
+                style={{
+                  background: 'linear-gradient(135deg, #ff7a29 0%, #ff6a13 50%, #e05300 100%)',
+                  boxShadow: '0 6px 28px rgba(255, 106, 19, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28)'
+                }}
               >
-                {content?.callout?.buttonText || "CONTACT US"}
+                {/* Ambient dynamic sheen animation */}
+                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+
+                <span className="relative z-10 font-sans tracking-[0.22em] drop-shadow-sm">
+                  {content?.callout?.buttonText || "CONTACT US"}
+                </span>
+
+                <span className="relative z-10 w-7 h-7 rounded-full bg-black/25 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-black/35 shadow-inner">
+                  <ArrowRight className="w-3.5 h-3.5 text-white" />
+                </span>
               </Link>
             </div>
           </RevealOnScroll>

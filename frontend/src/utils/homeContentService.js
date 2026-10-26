@@ -1,4 +1,87 @@
 // Default Home Page Configuration (Fine-Art Wedding Photography)
+export const DEFAULT_CATEGORY_ITEMS = [
+  {
+    id: 'weddings',
+    title: 'Weddings',
+    subtitle: 'Sacred Nuptials & Traditions',
+    mediaType: 'images', // 'images' | 'videos' | 'both'
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Sacred Poruwa Ceremony', location: 'The Grand Kandyan Hotel', url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Sunset Coastal Nuptials', location: 'Jetwing Lighthouse, Galle', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Regal Kandyan Bride', location: 'Cinnamon Grand Luxury Suite', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=85' },
+      { id: 4, title: 'Grand Ballroom Revelry', location: 'Galle Face Hotel, Colombo', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85' },
+      { id: 5, title: 'Golden Hour Vows', location: 'Amanwella Beach, Tangalle', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'graduations',
+    title: 'Graduations',
+    subtitle: 'Academic Milestones & Glory',
+    mediaType: 'images',
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Convocation Day Pride', location: 'BMICH Main Hall, Colombo', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Honorary Cap Toss', location: 'University Grounds', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Graduate Portraiture', location: 'Studio Atelier Colombo', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85' },
+      { id: 4, title: 'Valedictorian Walk', location: 'University Quadrangle', url: 'https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&w=1200&q=85' },
+      { id: 5, title: 'Family Heritage Triumph', location: 'Memorial Hall Colombo', url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'preshoots',
+    title: 'Pre-Shoots',
+    subtitle: 'Couples & Golden Hour Vignettes',
+    mediaType: 'images',
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Highlands Mist & Romance', location: 'Ceylon Tea Trails, Nuwara Eliya', url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Lakeside Twilight Serenade', location: 'Bolgoda Lake Sanctuary', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Dutch Fort Sunset Glow', location: 'Galle Ramparts Lighthouse', url: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=85' },
+      { id: 4, title: 'Ella Mountain Panorama', location: 'Nine Arch Demodara', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85' },
+      { id: 5, title: 'Mirissa Coastal Reverie', location: 'Coconut Tree Hill', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'commercial',
+    title: 'Events & Corporate',
+    subtitle: 'Galas & Brand Masterpieces',
+    mediaType: 'images',
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
+      { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
+      { id: 5, title: 'VIP Awards Ceremony', location: 'Kingsbury Waterfront', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'video360',
+    title: '360° Cinematic',
+    subtitle: 'Immersive Motion Experience',
+    mediaType: 'videos',
+    isHidden: false,
+    slides: [],
+    videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-posing-in-a-field-at-sunset-42998-large.mp4',
+    videoPoster: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
+    videoTitle: '360° Panoramic Video Reel'
+  }
+];
+
+// 2. CATEGORY SHOWCASE SECTION (Dynamic Categories with Items Array + Legacy Fallbacks)
 export const DEFAULT_HOME_CONTENT = {
   // 1. HERO SECTION
   hero: {
@@ -28,46 +111,22 @@ export const DEFAULT_HOME_CONTENT = {
     bgOpacity: 0.10
   },
 
-  // 2. CATEGORY SHOWCASE SECTION (5 Expandable Columns with 5 Slides per Category + 360 Video)
   categories: {
     sectionTitle: 'Our Signature Categories',
-    // 5 Sliding Photos for Column 1: Weddings
-    weddingSlides: [
-      { id: 1, title: 'Sacred Poruwa Ceremony', location: 'The Grand Kandyan Hotel', url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Sunset Coastal Nuptials', location: 'Jetwing Lighthouse, Galle', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Regal Kandyan Bride', location: 'Cinnamon Grand Luxury Suite', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Grand Ballroom Revelry', location: 'Galle Face Hotel, Colombo', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Golden Hour Vows', location: 'Amanwella Beach, Tangalle', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' }
-    ],
+    items: DEFAULT_CATEGORY_ITEMS,
+    // 5 Sliding Photos for Column 1: Weddings (legacy mirrors)
+    weddingSlides: DEFAULT_CATEGORY_ITEMS[0].slides,
     // 5 Sliding Photos for Column 2: Graduations
-    graduationSlides: [
-      { id: 1, title: 'Convocation Day Pride', location: 'BMICH Main Hall, Colombo', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Honorary Cap Toss', location: 'University Grounds', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Graduate Portraiture', location: 'Studio Atelier Colombo', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Valedictorian Walk', location: 'University Quadrangle', url: 'https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Family Heritage Triumph', location: 'Memorial Hall Colombo', url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=85' }
-    ],
+    graduationSlides: DEFAULT_CATEGORY_ITEMS[1].slides,
     // 5 Sliding Photos for Column 3: Pre-Shoots
-    preshootSlides: [
-      { id: 1, title: 'Highlands Mist & Romance', location: 'Ceylon Tea Trails, Nuwara Eliya', url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Lakeside Twilight Serenade', location: 'Bolgoda Lake Sanctuary', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Dutch Fort Sunset Glow', location: 'Galle Ramparts Lighthouse', url: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Ella Mountain Panorama', location: 'Nine Arch Demodara', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Mirissa Coastal Reverie', location: 'Coconut Tree Hill', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85' }
-    ],
+    preshootSlides: DEFAULT_CATEGORY_ITEMS[2].slides,
     // 5 Sliding Photos for Column 4: Corporate & Commercial
-    commercialSlides: [
-      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'VIP Awards Ceremony', location: 'Kingsbury Waterfront', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=85' }
-    ],
+    commercialSlides: DEFAULT_CATEGORY_ITEMS[3].slides,
     // Column 5: 360° & Cinematic Video
     video360: {
-      url: 'https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-posing-in-a-field-at-sunset-42998-large.mp4',
-      poster: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
-      title: '360° Cinematic Experience'
+      url: DEFAULT_CATEGORY_ITEMS[4].videoUrl,
+      poster: DEFAULT_CATEGORY_ITEMS[4].videoPoster,
+      title: DEFAULT_CATEGORY_ITEMS[4].videoTitle
     },
     // Legacy fallback keys
     weddingImage: '',
@@ -191,24 +250,99 @@ function openIndexedDB() {
 }
 
 function mergeCategories(savedCat = {}) {
+  // Check if savedCat has an items array
+  let items = savedCat.items;
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    items = [
+      {
+        id: 'weddings',
+        title: 'Weddings',
+        subtitle: 'Sacred Nuptials & Traditions',
+        mediaType: 'images',
+        isHidden: false,
+        slides: (savedCat.weddingSlides && Array.isArray(savedCat.weddingSlides)) ? savedCat.weddingSlides : DEFAULT_CATEGORY_ITEMS[0].slides,
+        videoUrl: '',
+        videoPoster: '',
+        videoTitle: ''
+      },
+      {
+        id: 'graduations',
+        title: 'Graduations',
+        subtitle: 'Academic Milestones & Glory',
+        mediaType: 'images',
+        isHidden: false,
+        slides: (savedCat.graduationSlides && Array.isArray(savedCat.graduationSlides)) ? savedCat.graduationSlides : DEFAULT_CATEGORY_ITEMS[1].slides,
+        videoUrl: '',
+        videoPoster: '',
+        videoTitle: ''
+      },
+      {
+        id: 'preshoots',
+        title: 'Pre-Shoots',
+        subtitle: 'Couples & Golden Hour Vignettes',
+        mediaType: 'images',
+        isHidden: false,
+        slides: (savedCat.preshootSlides && Array.isArray(savedCat.preshootSlides)) ? savedCat.preshootSlides : DEFAULT_CATEGORY_ITEMS[2].slides,
+        videoUrl: '',
+        videoPoster: '',
+        videoTitle: ''
+      },
+      {
+        id: 'commercial',
+        title: 'Events & Corporate',
+        subtitle: 'Galas & Brand Masterpieces',
+        mediaType: 'images',
+        isHidden: false,
+        slides: (savedCat.commercialSlides && Array.isArray(savedCat.commercialSlides)) ? savedCat.commercialSlides : DEFAULT_CATEGORY_ITEMS[3].slides,
+        videoUrl: '',
+        videoPoster: '',
+        videoTitle: ''
+      },
+      {
+        id: 'video360',
+        title: '360° Cinematic',
+        subtitle: 'Immersive Motion Experience',
+        mediaType: 'videos',
+        isHidden: false,
+        slides: [],
+        videoUrl: savedCat.video360?.url || DEFAULT_CATEGORY_ITEMS[4].videoUrl,
+        videoPoster: savedCat.video360?.poster || DEFAULT_CATEGORY_ITEMS[4].videoPoster,
+        videoTitle: savedCat.video360?.title || DEFAULT_CATEGORY_ITEMS[4].videoTitle
+      }
+    ];
+  }
+
+  // Ensure items have all required properties
+  const cleanItems = items.map((it, idx) => ({
+    id: it.id || `category-${Date.now()}-${idx}`,
+    title: it.title || `Category ${idx + 1}`,
+    subtitle: it.subtitle || '',
+    mediaType: it.mediaType || 'images', // 'images' | 'videos' | 'both'
+    isHidden: Boolean(it.isHidden),
+    slides: Array.isArray(it.slides) ? it.slides : [],
+    videoUrl: it.videoUrl || '',
+    videoPoster: it.videoPoster || '',
+    videoTitle: it.videoTitle || ''
+  }));
+
+  const weddingCategory = cleanItems.find(c => c.id === 'weddings');
+  const graduationCategory = cleanItems.find(c => c.id === 'graduations');
+  const preshootCategory = cleanItems.find(c => c.id === 'preshoots');
+  const commercialCategory = cleanItems.find(c => c.id === 'commercial');
+  const video360Category = cleanItems.find(c => c.id === 'video360' || c.mediaType === 'videos');
+
   return {
     ...DEFAULT_HOME_CONTENT.categories,
     ...savedCat,
-    weddingSlides: (savedCat.weddingSlides && Array.isArray(savedCat.weddingSlides) && savedCat.weddingSlides.length === 5)
-      ? savedCat.weddingSlides
-      : DEFAULT_HOME_CONTENT.categories.weddingSlides,
-    graduationSlides: (savedCat.graduationSlides && Array.isArray(savedCat.graduationSlides) && savedCat.graduationSlides.length === 5)
-      ? savedCat.graduationSlides
-      : DEFAULT_HOME_CONTENT.categories.graduationSlides,
-    preshootSlides: (savedCat.preshootSlides && Array.isArray(savedCat.preshootSlides) && savedCat.preshootSlides.length === 5)
-      ? savedCat.preshootSlides
-      : DEFAULT_HOME_CONTENT.categories.preshootSlides,
-    commercialSlides: (savedCat.commercialSlides && Array.isArray(savedCat.commercialSlides) && savedCat.commercialSlides.length === 5)
-      ? savedCat.commercialSlides
-      : DEFAULT_HOME_CONTENT.categories.commercialSlides,
+    items: cleanItems,
+    weddingSlides: weddingCategory?.slides || DEFAULT_HOME_CONTENT.categories.weddingSlides,
+    graduationSlides: graduationCategory?.slides || DEFAULT_HOME_CONTENT.categories.graduationSlides,
+    preshootSlides: preshootCategory?.slides || DEFAULT_HOME_CONTENT.categories.preshootSlides,
+    commercialSlides: commercialCategory?.slides || DEFAULT_HOME_CONTENT.categories.commercialSlides,
     video360: {
-      ...DEFAULT_HOME_CONTENT.categories.video360,
-      ...(savedCat.video360 || {})
+      url: video360Category?.videoUrl || DEFAULT_HOME_CONTENT.categories.video360.url,
+      poster: video360Category?.videoPoster || DEFAULT_HOME_CONTENT.categories.video360.poster,
+      title: video360Category?.videoTitle || DEFAULT_HOME_CONTENT.categories.video360.title
     }
   };
 }
