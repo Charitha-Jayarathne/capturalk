@@ -2433,35 +2433,35 @@
 /* About Us Hero & Section Responsive Polish */
 .about-hero-header {
   padding-top: 7.5rem !important;
-  padding-bottom: 3.5rem !important;
+  padding-bottom: 2rem !important;
 }
 @media (min-width: 640px) {
   .about-hero-header {
     padding-top: 9.5rem !important;
-    padding-bottom: 4.5rem !important;
+    padding-bottom: 2.75rem !important;
   }
 }
 @media (min-width: 1024px) {
   .about-hero-header {
     padding-top: 11.5rem !important;
-    padding-bottom: 6rem !important;
+    padding-bottom: 3.5rem !important;
   }
 }
 
 .about-section-spacing {
-  padding-top: 3.5rem !important;
-  padding-bottom: 3.5rem !important;
+  padding-top: 2.25rem !important;
+  padding-bottom: 2.25rem !important;
 }
 @media (min-width: 640px) {
   .about-section-spacing {
-    padding-top: 5rem !important;
-    padding-bottom: 5rem !important;
+    padding-top: 3.25rem !important;
+    padding-bottom: 3.25rem !important;
   }
 }
 @media (min-width: 1024px) {
   .about-section-spacing {
-    padding-top: 6.5rem !important;
-    padding-bottom: 6.5rem !important;
+    padding-top: 4rem !important;
+    padding-bottom: 4rem !important;
   }
 }
 

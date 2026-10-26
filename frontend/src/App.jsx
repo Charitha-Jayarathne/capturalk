@@ -36,7 +36,7 @@ function AppContent() {
           <Route path="/reviews" element={<ReviewsPage onOpenBooking={openBooking} />} />
           <Route path="/contact" element={<ContactUs onOpenBooking={openBooking} />} />
           <Route path="/admin" element={<AdminPage />} />
-          
+
           {/* Fallback route */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
@@ -46,9 +46,9 @@ function AppContent() {
       {!isAdmin && <Footer onOpenBooking={openBooking} />}
 
       {/* Reservation & Booking Modal (accessible globally across all pages) */}
-      <BookingModal 
-        isOpen={isBookingOpen} 
-        onClose={closeBooking} 
+      <BookingModal
+        isOpen={isBookingOpen}
+        onClose={closeBooking}
       />
     </div>
   );
