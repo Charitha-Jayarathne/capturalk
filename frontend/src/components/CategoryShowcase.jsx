@@ -93,6 +93,10 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
   const isCustomBg = Boolean(categoryContent?.customBgImage) && categoryContent?.bgType !== 'default';
   const bgOpacity = categoryContent?.bgOpacity !== undefined ? categoryContent.bgOpacity : 0.40;
 
+  if (categoryContent?.isHidden) {
+    return null;
+  }
+
   if (categories.length === 0) {
     return (
       <section className="py-12 text-center text-neutral-400 bg-[#060608]">
@@ -106,7 +110,8 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
 
   return (
     <section 
-      className="py-8 sm:py-12 relative overflow-hidden"
+      id="categories"
+      className="py-10 sm:py-14 lg:py-16 relative overflow-hidden scroll-mt-20 sm:scroll-mt-24"
       style={{
         backgroundColor: isCustomBg ? 'transparent' : '#060608',
         backgroundImage: isCustomBg 

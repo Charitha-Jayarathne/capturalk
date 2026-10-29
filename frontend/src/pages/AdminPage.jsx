@@ -41,7 +41,15 @@ import {
   ArrowDown,
   ChevronUp,
   GripVertical,
-  X
+  MapPin,
+  Edit,
+  X,
+  FolderHeart,
+  UploadCloud,
+  CheckCircle2,
+  Filter,
+  Tag,
+  Building2
 } from 'lucide-react';
 import Logo from '../components/Logo';
 import HeroImageEditorModal from '../components/HeroImageEditorModal';
@@ -53,7 +61,8 @@ import {
   resetHomeContent, 
   compressImageFile, 
   DEFAULT_HOME_CONTENT,
-  DEFAULT_CATEGORY_ITEMS
+  DEFAULT_CATEGORY_ITEMS,
+  DEFAULT_PARTNERS
 } from '../utils/homeContentService';
 import { 
   getAboutContent, 
@@ -61,9 +70,29 @@ import {
   saveAboutContent, 
   DEFAULT_ABOUT_CONTENT 
 } from '../utils/aboutContentService';
-
-
-
+import {
+  getAlbums,
+  getAlbumsAsync,
+  saveAlbums,
+  createAlbum,
+  updateAlbum,
+  deleteAlbum,
+  moveAlbum,
+  resetAlbums,
+  processUniversalImageFile,
+  reassignAlbumsCategory,
+  DEFAULT_ALBUMS
+} from '../utils/albumService';
+import {
+  getCategories,
+  getCategoriesAsync,
+  saveCategories,
+  addCategory,
+  updateCategory,
+  deleteCategory,
+  resetCategories,
+  DEFAULT_CATEGORIES
+} from '../utils/categoryService';
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
@@ -169,6 +198,170 @@ export default function AdminPage() {
     saveHomeContent(updatedHome);
     setSaveSuccessMsg('✓ Callout banner background updated and published live!');
     setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  const saveAndPublishAlbumsUpdate = (albumsData) => {
+    const updatedHome = {
+      ...homeCms,
+      albums: {
+        ...homeCms.albums,
+        ...albumsData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Recent Albums section updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  const saveAndPublishPartnersUpdate = (partnersData) => {
+    const updatedHome = {
+      ...homeCms,
+      partners: {
+        ...homeCms.partners,
+        ...partnersData
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg('✓ Trusted Partners section updated and published live!');
+    setTimeout(() => setSaveSuccessMsg(''), 5000);
+  };
+
+  // Trusted Partners Form & Edit State
+  const [newPartnerName, setNewPartnerName] = useState('');
+  const [newPartnerLogo, setNewPartnerLogo] = useState('');
+  const [isProcessingPartnerLogo, setIsProcessingPartnerLogo] = useState(false);
+  const [editingPartnerId, setEditingPartnerId] = useState(null);
+  const [editingPartnerName, setEditingPartnerName] = useState('');
+  const [editingPartnerLogo, setEditingPartnerLogo] = useState('');
+
+  const handleAddNewPartner = () => {
+    const trimmed = newPartnerName.trim();
+    if (!trimmed) {
+      alert('Please enter a partner / client name.');
+      return;
+    }
+    const currentPartners = homeCms.partners?.items || DEFAULT_PARTNERS;
+    const newPartner = {
+      id: `partner-${Date.now()}`,
+      name: trimmed,
+      logo: newPartnerLogo.trim() || '',
+      order: currentPartners.length + 1
+    };
+    const updatedList = [...currentPartners, newPartner];
+    saveAndPublishPartnersUpdate({ items: updatedList });
+    setNewPartnerName('');
+    setNewPartnerLogo('');
+  };
+
+  const handleDeletePartner = (id, name) => {
+    if (window.confirm(`Are you sure you want to remove "${name}" from Trusted Partners?`)) {
+      const currentPartners = homeCms.partners?.items || DEFAULT_PARTNERS;
+      const updatedList = currentPartners.filter(p => p.id !== id);
+      saveAndPublishPartnersUpdate({ items: updatedList });
+    }
+  };
+
+  const handleStartEditPartner = (partner) => {
+    setEditingPartnerId(partner.id);
+    setEditingPartnerName(partner.name || '');
+    setEditingPartnerLogo(partner.logo || '');
+  };
+
+  const handleSaveEditPartner = (id) => {
+    const trimmedName = editingPartnerName.trim();
+    if (!trimmedName) {
+      alert('Partner name cannot be empty.');
+      return;
+    }
+    const currentPartners = homeCms.partners?.items || DEFAULT_PARTNERS;
+    const updatedList = currentPartners.map(p => {
+      if (p.id === id) {
+        return {
+          ...p,
+          name: trimmedName,
+          logo: editingPartnerLogo.trim()
+        };
+      }
+      return p;
+    });
+    saveAndPublishPartnersUpdate({ items: updatedList });
+    setEditingPartnerId(null);
+    setEditingPartnerName('');
+    setEditingPartnerLogo('');
+  };
+
+  const handleMovePartner = (index, direction) => {
+    const currentPartners = [...(homeCms.partners?.items || DEFAULT_PARTNERS)];
+    const targetIndex = direction === 'up' ? index - 1 : index + 1;
+    if (targetIndex < 0 || targetIndex >= currentPartners.length) return;
+    const temp = currentPartners[index];
+    currentPartners[index] = currentPartners[targetIndex];
+    currentPartners[targetIndex] = temp;
+    saveAndPublishPartnersUpdate({ items: currentPartners });
+  };
+
+  const handlePartnerLogoUpload = async (e, isEditing = false) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setIsProcessingPartnerLogo(true);
+    try {
+      const optimizedUrl = await compressImageFile(file, 400, 0.85);
+      if (isEditing) {
+        setEditingPartnerLogo(optimizedUrl);
+      } else {
+        setNewPartnerLogo(optimizedUrl);
+      }
+    } catch (err) {
+      alert('Failed to process logo image: ' + err.message);
+    } finally {
+      setIsProcessingPartnerLogo(false);
+      e.target.value = '';
+    }
+  };
+
+  // Toggle Visibility for any Home Page Section (Hero, Categories, Albums, Partners, Story, Reviews, Callout)
+  const toggleSectionVisibility = (sectionKey, sectionName) => {
+    const isCurrentlyHidden = Boolean(homeCms[sectionKey]?.isHidden);
+    const newHidden = !isCurrentlyHidden;
+    const updatedHome = {
+      ...homeCms,
+      [sectionKey]: {
+        ...homeCms[sectionKey],
+        isHidden: newHidden
+      }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg(
+      newHidden
+        ? `👁️ "${sectionName}" is now HIDDEN from the live website.`
+        : `✓ "${sectionName}" is now VISIBLE on the live website.`
+    );
+    setTimeout(() => setSaveSuccessMsg(''), 4500);
+  };
+
+  // Bulk set all sections visible or hidden
+  const setAllSectionsVisibility = (hideAll) => {
+    const updatedHome = {
+      ...homeCms,
+      hero: { ...homeCms.hero, isHidden: hideAll },
+      categories: { ...homeCms.categories, isHidden: hideAll },
+      albums: { ...homeCms.albums, isHidden: hideAll },
+      partners: { ...homeCms.partners, isHidden: hideAll },
+      story: { ...homeCms.story, isHidden: hideAll },
+      reviews: { ...homeCms.reviews, isHidden: hideAll },
+      callout: { ...homeCms.callout, isHidden: hideAll }
+    };
+    setHomeCms(updatedHome);
+    saveHomeContent(updatedHome);
+    setSaveSuccessMsg(
+      hideAll
+        ? '👁️ All Home Page sections are now HIDDEN from the live website.'
+        : '✓ All Home Page sections are now VISIBLE on the live website.'
+    );
+    setTimeout(() => setSaveSuccessMsg(''), 4500);
   };
 
   // Dynamic Categories Management State
@@ -332,6 +525,351 @@ export default function AdminPage() {
     }
     const updated = slides.filter((_, idx) => idx !== slideIdx);
     handleUpdateActiveCat({ slides: updated });
+  };
+
+  // Dynamic Categories State
+  const [categoriesList, setCategoriesList] = useState(getCategories());
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+
+  // Albums CMS State (12 Albums 3x4 grid on Home Page, all albums in Masterpiece Gallery)
+  const [albumsList, setAlbumsList] = useState(getAlbums());
+  const [showAddAlbumModal, setShowAddAlbumModal] = useState(false);
+  const [editingAlbum, setEditingAlbum] = useState(null);
+  const [albumSearchQuery, setAlbumSearchQuery] = useState('');
+  const [albumCategoryFilter, setAlbumCategoryFilter] = useState('ALL');
+  const [isProcessingAlbumImage, setIsProcessingAlbumImage] = useState(false);
+  const [albumUploadStats, setAlbumUploadStats] = useState(null);
+  const [isCoverDragOver, setIsCoverDragOver] = useState(false);
+  const [isQuickDragOver, setIsQuickDragOver] = useState(false);
+
+  const [albumForm, setAlbumForm] = useState({
+    title: '',
+    subtitle: '',
+    category: getCategories()[0]?.name || 'General',
+    location: '',
+    date: '',
+    photoCount: 40,
+    coverImage: '',
+    photos: [],
+    description: ''
+  });
+
+  useEffect(() => {
+    getAlbumsAsync().then(loaded => {
+      if (loaded && loaded.length > 0) {
+        setAlbumsList(loaded);
+      }
+    });
+
+    getCategoriesAsync().then(loaded => {
+      if (loaded && Array.isArray(loaded)) {
+        setCategoriesList(loaded);
+      }
+    });
+
+    const handleAlbumsUpdate = (e) => {
+      if (e?.detail) {
+        setAlbumsList(e.detail);
+      } else {
+        setAlbumsList(getAlbums());
+      }
+    };
+
+    const handleCategoriesUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setCategoriesList(e.detail);
+      } else {
+        setCategoriesList(getCategories());
+      }
+    };
+
+    window.addEventListener('captura_albums_updated', handleAlbumsUpdate);
+    window.addEventListener('captura_categories_updated', handleCategoriesUpdate);
+    window.addEventListener('storage', handleAlbumsUpdate);
+    window.addEventListener('storage', handleCategoriesUpdate);
+    return () => {
+      window.removeEventListener('captura_albums_updated', handleAlbumsUpdate);
+      window.removeEventListener('captura_categories_updated', handleCategoriesUpdate);
+      window.removeEventListener('storage', handleAlbumsUpdate);
+      window.removeEventListener('storage', handleCategoriesUpdate);
+    };
+  }, []);
+
+  const handleAddNewCategory = (nameToUse) => {
+    const trimmed = (nameToUse || newCategoryInput).trim();
+    if (!trimmed) {
+      alert('Please enter a category name.');
+      return null;
+    }
+    try {
+      const created = addCategory(trimmed);
+      const updatedList = getCategories();
+      setCategoriesList(updatedList);
+      setNewCategoryInput('');
+      setSaveSuccessMsg(`✓ Category "${trimmed}" created & active across system!`);
+      setTimeout(() => setSaveSuccessMsg(''), 4500);
+      return created;
+    } catch (err) {
+      alert(err.message);
+      return null;
+    }
+  };
+
+  const handleUpdateCategoryName = (catId) => {
+    const trimmed = editingCategoryName.trim();
+    if (!trimmed) {
+      alert('Category name cannot be empty.');
+      return;
+    }
+    try {
+      const oldCat = categoriesList.find(c => c.id === catId);
+      updateCategory(catId, trimmed);
+      if (oldCat && oldCat.name !== trimmed) {
+        reassignAlbumsCategory(oldCat.name, trimmed);
+        setAlbumsList(getAlbums());
+      }
+      setCategoriesList(getCategories());
+      setEditingCategoryId(null);
+      setEditingCategoryName('');
+      setSaveSuccessMsg(`✓ Category renamed to "${trimmed}".`);
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    } catch (err) {
+      alert(err.message);
+    }
+  };
+
+  const handleDeleteCategoryPrompt = (catId, catName) => {
+    if (categoriesList.length <= 1) {
+      alert('You must have at least one category in the system.');
+      return;
+    }
+    if (window.confirm(`Are you sure you want to delete category "${catName}"?\n\nThis will remove it from all upload selectors, admin filters, and website pages.`)) {
+      const remaining = categoriesList.filter(c => c.id !== catId);
+      const fallbackCat = remaining[0]?.name || 'General';
+
+      deleteCategory(catId);
+      reassignAlbumsCategory(catName, fallbackCat);
+      setAlbumsList(getAlbums());
+      setCategoriesList(getCategories());
+
+      // If home page categories exist, remove matching item
+      if (homeCms.categories?.items) {
+        const updatedHomeItems = homeCms.categories.items.filter(
+          item => (item.title || '').toLowerCase() !== catName.toLowerCase() && (item.id || '').toLowerCase() !== catName.toLowerCase()
+        );
+        if (updatedHomeItems.length !== homeCms.categories.items.length) {
+          saveAndPublishCategories(updatedHomeItems);
+        }
+      }
+
+      setSaveSuccessMsg(`✓ Category "${catName}" removed. Any associated albums were moved to "${fallbackCat}".`);
+      setTimeout(() => setSaveSuccessMsg(''), 4500);
+    }
+  };
+
+  const handleResetCategoriesToDefault = () => {
+    if (window.confirm('Reset categories back to initial defaults?')) {
+      resetCategories();
+      setCategoriesList(getCategories());
+      setSaveSuccessMsg('✓ Categories reset to defaults.');
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    }
+  };
+
+  const handleOpenAddAlbumModal = (initialCoverUrl = null) => {
+    setEditingAlbum(null);
+    setAlbumUploadStats(null);
+    const defaultCat = categoriesList[0]?.name || 'General';
+    setAlbumForm({
+      title: '',
+      subtitle: '',
+      category: defaultCat,
+      location: 'Colombo, Sri Lanka',
+      date: new Date().toLocaleDateString('en-US', { month: 'long', year: 'numeric' }),
+      photoCount: initialCoverUrl ? 1 : 40,
+      coverImage: initialCoverUrl || 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85',
+      photos: initialCoverUrl ? [initialCoverUrl] : [],
+      description: ''
+    });
+    setShowAddAlbumModal(true);
+  };
+
+  const handleOpenEditAlbumModal = (album) => {
+    setEditingAlbum(album);
+    setAlbumUploadStats(null);
+    const defaultCat = categoriesList[0]?.name || 'General';
+    setAlbumForm({
+      title: album.title || '',
+      subtitle: album.subtitle || '',
+      category: album.category || defaultCat,
+      location: album.location || '',
+      date: album.date || '',
+      photoCount: album.photoCount || (album.photos?.length || 40),
+      coverImage: album.coverImage || '',
+      photos: Array.isArray(album.photos) && album.photos.length > 0 ? album.photos : (album.coverImage ? [album.coverImage] : []),
+      description: album.description || ''
+    });
+    setShowAddAlbumModal(true);
+  };
+
+  // Universal Media Processor: handles any format (JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, GIF, SVG)
+  const handleUniversalCoverFileChange = async (file) => {
+    if (!file) return;
+    setIsProcessingAlbumImage(true);
+    setAlbumUploadStats(null);
+
+    try {
+      const result = await processUniversalImageFile(file);
+      setAlbumForm(prev => {
+        const updatedPhotos = prev.photos && prev.photos.length > 0 ? prev.photos : [result.dataUrl];
+        return {
+          ...prev,
+          coverImage: result.dataUrl,
+          photos: updatedPhotos,
+          photoCount: updatedPhotos.length
+        };
+      });
+      setAlbumUploadStats({
+        format: result.format,
+        outputFormat: result.outputFormat,
+        originalSize: result.originalSize,
+        compressedSize: result.compressedSize,
+        fileName: result.fileName
+      });
+      setSaveSuccessMsg(`✓ Processed ${result.format} (${result.originalSize} → ${result.compressedSize} ${result.outputFormat}). High-definition & web-optimized!`);
+      setTimeout(() => setSaveSuccessMsg(''), 4500);
+    } catch (err) {
+      console.warn('Universal image processing fallback', err);
+      const reader = new FileReader();
+      reader.onload = () => {
+        setAlbumForm(prev => ({ ...prev, coverImage: reader.result }));
+      };
+      reader.readAsDataURL(file);
+    } finally {
+      setIsProcessingAlbumImage(false);
+    }
+  };
+
+  // Multiple Photos Upload Handler: batch processes multiple files in any format
+  const handleUniversalMultiplePhotosUpload = async (fileList) => {
+    if (!fileList || fileList.length === 0) return;
+    setIsProcessingAlbumImage(true);
+    const files = Array.from(fileList);
+    const newPhotos = [];
+
+    for (const f of files) {
+      try {
+        const result = await processUniversalImageFile(f);
+        newPhotos.push(result.dataUrl);
+      } catch (err) {
+        console.warn('Multiple upload item fallback', err);
+      }
+    }
+
+    setAlbumForm(prev => {
+      const merged = [...(prev.photos || []), ...newPhotos];
+      return {
+        ...prev,
+        photos: merged,
+        photoCount: merged.length,
+        coverImage: prev.coverImage || merged[0] || ''
+      };
+    });
+
+    setIsProcessingAlbumImage(false);
+    setSaveSuccessMsg(`✓ Added ${newPhotos.length} photos to this album!`);
+    setTimeout(() => setSaveSuccessMsg(''), 4000);
+  };
+
+  const handleRemovePhotoFromAlbum = (photoIndex) => {
+    setAlbumForm(prev => {
+      const updatedPhotos = prev.photos.filter((_, idx) => idx !== photoIndex);
+      const newCover = (prev.coverImage === prev.photos[photoIndex]) 
+        ? (updatedPhotos[0] || '') 
+        : prev.coverImage;
+      return {
+        ...prev,
+        photos: updatedPhotos,
+        photoCount: updatedPhotos.length,
+        coverImage: newCover
+      };
+    });
+  };
+
+  const handleSetPhotoAsCover = (photoUrl) => {
+    setAlbumForm(prev => ({
+      ...prev,
+      coverImage: photoUrl
+    }));
+    setSaveSuccessMsg('✓ Selected photo set as album cover.');
+    setTimeout(() => setSaveSuccessMsg(''), 3000);
+  };
+
+  const handleMoveAlbum = (id, direction) => {
+    moveAlbum(id, direction);
+    setAlbumsList(getAlbums());
+    setSaveSuccessMsg(`✓ Album order updated for live showcase.`);
+    setTimeout(() => setSaveSuccessMsg(''), 3000);
+  };
+
+  const handleSaveAlbum = (e) => {
+    if (e && e.preventDefault) e.preventDefault();
+    if (!albumForm.title.trim()) {
+      alert('Please enter an album title.');
+      return;
+    }
+    if (!albumForm.coverImage.trim()) {
+      alert('Please provide or upload a cover image for this album.');
+      return;
+    }
+
+    const photos = Array.isArray(albumForm.photos) && albumForm.photos.length > 0 
+      ? albumForm.photos 
+      : [albumForm.coverImage];
+
+    const dataToSave = {
+      ...albumForm,
+      photos,
+      photoCount: photos.length > 0 ? photos.length : (Number(albumForm.photoCount) || 30)
+    };
+
+    if (editingAlbum) {
+      const updated = updateAlbum(editingAlbum.id, dataToSave);
+      if (updated) {
+        setAlbumsList(getAlbums());
+        setSaveSuccessMsg(`✓ Album "${albumForm.title}" updated successfully!`);
+      }
+    } else {
+      const created = createAlbum(dataToSave);
+      if (created) {
+        setAlbumsList(getAlbums());
+        setSaveSuccessMsg(`✓ Album "${albumForm.title}" uploaded & added to live showcase!`);
+      }
+    }
+    setShowAddAlbumModal(false);
+    setEditingAlbum(null);
+    setAlbumUploadStats(null);
+    setTimeout(() => setSaveSuccessMsg(''), 4500);
+  };
+
+  const handleDeleteAlbum = (id, title) => {
+    if (window.confirm(`Are you sure you want to delete the album "${title}"?`)) {
+      deleteAlbum(id);
+      setAlbumsList(getAlbums());
+      setSaveSuccessMsg(`✓ Album "${title}" removed.`);
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    }
+  };
+
+  const handleResetAlbumsToDefault = () => {
+    if (window.confirm('Reset albums back to original 12 default fine-art albums?')) {
+      resetAlbums();
+      setAlbumsList(getAlbums());
+      setSaveSuccessMsg('✓ Albums reset to factory 12 fine-art collections.');
+      setTimeout(() => setSaveSuccessMsg(''), 4000);
+    }
   };
 
   // About Us Page CMS State
@@ -586,8 +1124,7 @@ export default function AdminPage() {
   const pagesList = [
     { id: 'customize-home', name: 'Home Page', path: '/', icon: Home, badge: 'Main' },
     { id: 'customize-about', name: 'About Us', path: '/about', icon: Info, badge: 'Story' },
-    { id: 'customize-portfolio', name: 'Portfolio', path: '/portfolio', icon: Camera, badge: 'Showcase' },
-    { id: 'customize-gallery', name: 'Client Gallery', path: '/client-gallery', icon: ImageIcon, badge: 'Vault' },
+    { id: 'customize-gallery', name: 'Gallery Page', path: '/gallery', icon: ImageIcon, badge: 'Archives' },
     { id: 'customize-reviews', name: 'Reviews Page', path: '/reviews', icon: Star, badge: `${reviewsList.length}` },
     { id: 'customize-contact', name: 'Contact Us', path: '/contact', icon: Mail, badge: 'Inquiry' }
   ];
@@ -685,7 +1222,40 @@ export default function AdminPage() {
               </div>
 
               {/* ------------------------------------------------------------- */}
-              {/* 2. STUDIO SUITE OPERATIONS */}
+              {/* 2. DEDICATED ALBUMS & MASTERPIECES HUB (REQUESTED BY USER) */}
+              {/* ------------------------------------------------------------- */}
+              <div style={{ borderTop: '1px solid #181824', paddingTop: '14px', marginBottom: '14px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 10px 6px 10px' }}>
+                  <p style={{ margin: 0, fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ff6a13', fontWeight: 700 }}>
+                    Albums & Masterpieces
+                  </p>
+                  <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '4px', backgroundColor: 'rgba(255,106,19,0.18)', color: '#ff6a13', fontWeight: 700 }}>
+                    {albumsList.length}
+                  </span>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+                  <button
+                    onClick={() => setActiveSection('manage-albums')}
+                    className={`admin-nav-item ${activeSection === 'manage-albums' ? 'active' : ''}`}
+                    style={{
+                      borderLeft: activeSection === 'manage-albums' ? '3px solid #ff6a13' : '3px solid transparent',
+                      backgroundColor: activeSection === 'manage-albums' ? 'rgba(255,106,19,0.12)' : undefined
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
+                      <Layers style={{ width: '15px', height: '15px', color: activeSection === 'manage-albums' ? '#ff6a13' : '#ffaa66' }} />
+                      <span style={{ fontWeight: 600 }}>Albums & Gallery</span>
+                    </div>
+                    <span className="admin-nav-badge" style={{ backgroundColor: '#ff6a13', color: '#fff', fontWeight: 700 }}>
+                      Hub
+                    </span>
+                  </button>
+                </div>
+              </div>
+
+              {/* ------------------------------------------------------------- */}
+              {/* 3. STUDIO SUITE OPERATIONS */}
               {/* ------------------------------------------------------------- */}
               <div style={{ borderTop: '1px solid #181824', paddingTop: '14px', marginBottom: '8px' }}>
                 <p style={{ margin: '0 0 6px 10px', fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#666677', fontWeight: 700 }}>
@@ -778,7 +1348,7 @@ export default function AdminPage() {
               </span>
               <span style={{ color: '#444455' }}>/</span>
               <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600 }}>
-                {pagesList.find(p => p.id === activeSection)?.name || 'Studio Overview'}
+                {activeSection === 'manage-albums' ? 'Albums & Masterpieces Manager' : (pagesList.find(p => p.id === activeSection)?.name || 'Studio Overview')}
               </span>
             </div>
 
@@ -852,24 +1422,253 @@ export default function AdminPage() {
                   </div>
                 </div>
 
+                {/* Home Page Sections Visibility Overview Manager */}
+                <div style={{
+                  padding: '20px 24px',
+                  backgroundColor: '#0f0f17',
+                  border: '1px solid #1f1f2e',
+                  borderRadius: '8px',
+                  marginBottom: '28px',
+                  boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '12px', marginBottom: '18px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                      <div style={{ width: '34px', height: '34px', borderRadius: '6px', backgroundColor: 'rgba(255,106,19,0.15)', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '1px solid rgba(255,106,19,0.25)' }}>
+                        <Eye style={{ width: '18px', height: '18px', color: '#ff6a13' }} />
+                      </div>
+                      <div>
+                        <h3 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: 600 }}>
+                          Home Page Sections Visibility (Hide / Show Controls)
+                        </h3>
+                        <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                          Control which sections appear on your live Home page. Any hidden section will instantly disappear from the public website.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={() => setAllSectionsVisibility(false)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '7px 12px',
+                          backgroundColor: '#151520',
+                          border: '1px solid #28283c',
+                          color: '#22c55e',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="Make all 5 sections visible on the live site"
+                      >
+                        <Eye style={{ width: '13px', height: '13px' }} />
+                        <span>Show All Sections</span>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => setAllSectionsVisibility(true)}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '7px 12px',
+                          backgroundColor: '#151520',
+                          border: '1px solid #28283c',
+                          color: '#ff6a13',
+                          borderRadius: '4px',
+                          fontSize: '11px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease'
+                        }}
+                        title="Hide all sections from the live site"
+                      >
+                        <EyeOff style={{ width: '13px', height: '13px' }} />
+                        <span>Hide All Sections</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* 6 Sections Grid */}
+                  <div style={{
+                    display: 'grid',
+                    gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+                    gap: '12px'
+                  }}>
+                    {[
+                      { key: 'hero', num: '1', title: 'Fullscreen Hero', sub: 'Top Landing Slideshow' },
+                      { key: 'categories', num: '2', title: 'Category Showcase', sub: 'Expandable Panels & 360' },
+                      { key: 'albums', num: '3', title: 'Recent Albums (12)', sub: '3×4 Grid Masterpieces' },
+                      { key: 'partners', num: '3.5', title: 'Trusted Partners', sub: 'Single Row Client Slider' },
+                      { key: 'story', num: '4', title: 'Philosophy & Story', sub: 'Brand Story Narrative' },
+                      { key: 'reviews', num: '5', title: 'Client Reviews', sub: 'Testimonials Grid' },
+                      { key: 'callout', num: '6', title: 'Callout Banner', sub: 'Bottom Contact CTA' }
+                    ].map((sec) => {
+                      const isHidden = Boolean(homeCms[sec.key]?.isHidden);
+                      return (
+                        <div
+                          key={sec.key}
+                          style={{
+                            padding: '14px',
+                            borderRadius: '6px',
+                            backgroundColor: isHidden ? '#181216' : '#14141f',
+                            border: isHidden ? '1px solid #ff6a13' : '1px solid #252538',
+                            display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'space-between',
+                            gap: '12px',
+                            transition: 'all 0.2s ease',
+                            position: 'relative'
+                          }}
+                        >
+                          <div>
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '6px' }}>
+                              <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.08em', color: '#ff6a13', fontWeight: 700 }}>
+                                SECTION {sec.num}
+                              </span>
+                              <span style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                fontSize: '10px',
+                                fontWeight: 600,
+                                color: isHidden ? '#ff8533' : '#22c55e'
+                              }}>
+                                <span style={{
+                                  width: '6px',
+                                  height: '6px',
+                                  borderRadius: '50%',
+                                  backgroundColor: isHidden ? '#ff6a13' : '#22c55e',
+                                  boxShadow: isHidden ? '0 0 6px rgba(255,106,19,0.8)' : '0 0 6px rgba(34,197,94,0.8)'
+                                }} />
+                                {isHidden ? 'Hidden' : 'Visible'}
+                              </span>
+                            </div>
+
+                            <h4 style={{ margin: 0, fontSize: '13px', color: '#fff', fontWeight: 600 }}>
+                              {sec.title}
+                            </h4>
+                            <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#888899' }}>
+                              {sec.sub}
+                            </p>
+                          </div>
+
+                          <button
+                            type="button"
+                            onClick={() => toggleSectionVisibility(sec.key, sec.title)}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              width: '100%',
+                              padding: '7px 10px',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 600,
+                              cursor: 'pointer',
+                              transition: 'all 0.2s ease',
+                              backgroundColor: isHidden ? '#ff6a13' : '#1c1c2b',
+                              color: isHidden ? '#fff' : '#ccc',
+                              border: isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                              boxShadow: isHidden ? '0 3px 12px rgba(255,106,19,0.35)' : 'none'
+                            }}
+                          >
+                            {isHidden ? (
+                              <>
+                                <EyeOff style={{ width: '13px', height: '13px' }} />
+                                <span>Unhide (Make Visible)</span>
+                              </>
+                            ) : (
+                              <>
+                                <Eye style={{ width: '13px', height: '13px', color: '#22c55e' }} />
+                                <span>Hide Section</span>
+                              </>
+                            )}
+                          </button>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
                 {/* Home Sections Customizer Stack */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '30px' }}>
 
                   {/* --------------------------------------------------------- */}
                   {/* SECTION 1: HERO SECTION */}
                   {/* --------------------------------------------------------- */}
-                  <div className="admin-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.hero?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.hero?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
-                          SECTION 1
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 1
+                          </span>
+                          {homeCms.hero?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
                           Fullscreen Hero Section
                         </h3>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Top Landing View</span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('hero', 'Fullscreen Hero Section')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.hero?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.hero?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.hero?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.hero?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.hero?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.hero?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+                        <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Top Landing View</span>
+                      </div>
                     </div>
+
+                    {homeCms.hero?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Hero Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
 
                     {/* Section Background Controller */}
                     <div style={{ padding: '16px', backgroundColor: '#12121b', border: '1px solid #1f1f2e', borderRadius: '6px', marginBottom: '22px' }}>
@@ -1157,12 +1956,23 @@ export default function AdminPage() {
                   {/* --------------------------------------------------------- */}
                   {/* SECTION 2: DYNAMIC CATEGORY SHOWCASE & MANAGEMENT         */}
                   {/* --------------------------------------------------------- */}
-                  <div className="admin-card" style={{ padding: '24px' }}>
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.categories?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.categories?.isHidden ? '#0e0b10' : undefined
+                  }}>
                     <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
-                          SECTION 2
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 2
+                          </span>
+                          {homeCms.categories?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
                           Dynamic Category Management & Showcase
                         </h3>
@@ -1171,29 +1981,71 @@ export default function AdminPage() {
                         </p>
                       </div>
 
-                      <button
-                        type="button"
-                        onClick={() => setShowAddCatModal(true)}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '9px 16px',
-                          backgroundColor: '#ff6a13',
-                          color: '#fff',
-                          border: 'none',
-                          borderRadius: '6px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: '0 4px 14px rgba(255, 106, 19, 0.35)',
-                          transition: 'all 0.2s ease'
-                        }}
-                      >
-                        <Plus style={{ width: '15px', height: '15px' }} />
-                        <span>Add New Category</span>
-                      </button>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('categories', 'Dynamic Category Showcase')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 14px',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.categories?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.categories?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.categories?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.categories?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.categories?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.categories?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setShowAddCatModal(true)}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '9px 16px',
+                            backgroundColor: '#ff6a13',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: '0 4px 14px rgba(255, 106, 19, 0.35)',
+                            transition: 'all 0.2s ease'
+                          }}
+                        >
+                          <Plus style={{ width: '15px', height: '15px' }} />
+                          <span>Add New Category</span>
+                        </button>
+                      </div>
                     </div>
+
+                    {homeCms.categories?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Category Showcase Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
 
                     {/* Section Background Controller */}
                     <div style={{ padding: '16px', backgroundColor: '#12121b', border: '1px solid #1f1f2e', borderRadius: '6px', marginBottom: '22px' }}>
@@ -2102,20 +2954,961 @@ export default function AdminPage() {
                   </div>
 
                   {/* --------------------------------------------------------- */}
-                  {/* SECTION 3: STORY & PHILOSOPHY */}
+                  {/* SECTION 3: RECENT MASTERPIECES & ALBUMS SHOWCASE (8 CARDS) */}
                   {/* --------------------------------------------------------- */}
-                  <div className="admin-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.albums?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.albums?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    {/* Header */}
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
-                          SECTION 3
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 3
+                          </span>
+                          {homeCms.albums?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                          <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#181824', color: '#ffaa66', border: '1px solid #332211', fontWeight: 600 }}>
+                            3-Row × 4-Card Luxury Grid (Latest 12)
+                          </span>
+                        </div>
+                        <h3 style={{ margin: '4px 0 0 0', fontSize: '18px', color: '#fff', fontWeight: 700 }}>
+                          Recent Masterpieces & Albums Showcase
+                        </h3>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('albums', 'Recent Albums Showcase')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.albums?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.albums?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.albums?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.albums?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.albums?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.albums?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => setActiveSection('manage-albums')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 14px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            backgroundColor: '#181826',
+                            color: '#ffaa66',
+                            border: '1px solid #3d2b1d'
+                          }}
+                        >
+                          <Layers style={{ width: '14px', height: '14px', color: '#ff6a13' }} />
+                          <span>Dedicated Album Hub →</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAddAlbumModal()}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 14px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            backgroundColor: '#ff6a13',
+                            color: '#fff',
+                            border: 'none',
+                            boxShadow: '0 2px 10px rgba(255,106,19,0.35)'
+                          }}
+                        >
+                          <Plus style={{ width: '14px', height: '14px' }} />
+                          <span>Upload New Album</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {homeCms.albums?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Recent Albums Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
+
+                    {/* Section Texts & Customizer Settings */}
+                    <div style={{ padding: '16px', backgroundColor: '#101018', border: '1px solid #1c1c28', borderRadius: '6px', marginBottom: '20px' }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px', marginBottom: '12px' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '4px' }}>
+                            Top Badge / Category Tagline
+                          </label>
+                          <input
+                            type="text"
+                            value={homeCms.albums?.badge || ''}
+                            placeholder="e.g. CURATED CLIENT ARCHIVES"
+                            onChange={(e) => saveAndPublishAlbumsUpdate({ badge: e.target.value })}
+                            className="admin-input"
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '12px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '4px' }}>
+                            Section Title
+                          </label>
+                          <input
+                            type="text"
+                            value={homeCms.albums?.title || ''}
+                            placeholder="e.g. Recent Masterpieces & Albums"
+                            onChange={(e) => saveAndPublishAlbumsUpdate({ title: e.target.value })}
+                            className="admin-input"
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '12px' }}
+                          />
+                        </div>
+
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '4px' }}>
+                            "View All" Button Text
+                          </label>
+                          <input
+                            type="text"
+                            value={homeCms.albums?.viewAllButtonText || ''}
+                            placeholder="e.g. EXPLORE FULL GALLERY VAULT"
+                            onChange={(e) => saveAndPublishAlbumsUpdate({ viewAllButtonText: e.target.value })}
+                            className="admin-input"
+                            style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '12px' }}
+                          />
+                        </div>
+                      </div>
+
+                      <div style={{ marginBottom: '14px' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '4px' }}>
+                          Section Subtitle / Description
+                        </label>
+                        <textarea
+                          rows={2}
+                          value={homeCms.albums?.subtitle || ''}
+                          placeholder="Brief description about these recent albums..."
+                          onChange={(e) => saveAndPublishAlbumsUpdate({ subtitle: e.target.value })}
+                          className="admin-input"
+                          style={{ width: '100%', padding: '7px 10px', borderRadius: '4px', fontSize: '12px', resize: 'vertical' }}
+                        />
+                      </div>
+
+                      {/* Background Customizer */}
+                      <div style={{ paddingTop: '12px', borderTop: '1px solid #1a1a26' }}>
+                        <div style={{ display: 'flex', gap: '16px', alignItems: 'center', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '11px', fontWeight: 700, color: '#ff6a13', textTransform: 'uppercase' }}>Section Background:</span>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#ddd', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="albumsBgType"
+                              checked={homeCms.albums?.bgType !== 'custom'}
+                              onChange={() => saveAndPublishAlbumsUpdate({ bgType: 'default' })}
+                              style={{ accentColor: '#ff6a13' }}
+                            />
+                            <span>Default Dark Tone (#07070a)</span>
+                          </label>
+                          <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '12px', color: '#ddd', cursor: 'pointer' }}>
+                            <input
+                              type="radio"
+                              name="albumsBgType"
+                              checked={homeCms.albums?.bgType === 'custom'}
+                              onChange={() => saveAndPublishAlbumsUpdate({ bgType: 'custom' })}
+                              style={{ accentColor: '#ff6a13' }}
+                            />
+                            <span style={{ color: '#ff6a13', fontWeight: 600 }}>Custom Background Image</span>
+                          </label>
+                        </div>
+
+                        {homeCms.albums?.bgType === 'custom' && (
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flexWrap: 'wrap', marginTop: '10px' }}>
+                            {homeCms.albums?.customBgImage && (
+                              <img
+                                src={homeCms.albums.customBgImage}
+                                alt="Albums Bg Preview"
+                                style={{ width: '80px', height: '50px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13', cursor: 'pointer' }}
+                                onClick={() => openHeroEditor(homeCms.albums.customBgImage, 'Adjust Recent Albums Background', (croppedUrl) => {
+                                  saveAndPublishAlbumsUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                })}
+                                title="Click to adjust position in Preview Editor"
+                              />
+                            )}
+                            <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '7px 12px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '4px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}>
+                              <Upload style={{ width: '12px', height: '12px' }} />
+                              <span>Upload Background</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                onChange={(e) => handleImageFileChange(e, (dataUrl) => {
+                                  openHeroEditor(dataUrl, 'Adjust Recent Albums Background', (croppedUrl) => {
+                                    saveAndPublishAlbumsUpdate({ bgType: 'custom', customBgImage: croppedUrl });
+                                  });
+                                })}
+                              />
+                            </label>
+                            <input
+                              type="text"
+                              placeholder="Or paste background image URL..."
+                              value={homeCms.albums?.customBgImage || ''}
+                              onChange={(e) => saveAndPublishAlbumsUpdate({ bgType: 'custom', customBgImage: e.target.value })}
+                              className="admin-input"
+                              style={{ flex: 1, minWidth: '200px', padding: '7px 10px', borderRadius: '4px', fontSize: '11px' }}
+                            />
+                          </div>
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Albums Library Management */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '10px' }}>
+                        <div>
+                          <h4 style={{ margin: 0, fontSize: '14px', color: '#fff', fontWeight: 600 }}>
+                            Uploaded Albums Library ({albumsList.length} Total)
+                          </h4>
+                          <p style={{ margin: '3px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                            The first 12 albums shown below appear on the Home page (3 rows of 4 cards). All albums will be displayed in the upcoming Gallery page.
+                          </p>
+                        </div>
+
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <button
+                            type="button"
+                            onClick={handleResetAlbumsToDefault}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '5px',
+                              padding: '6px 10px',
+                              backgroundColor: '#161622',
+                              border: '1px solid #2a2a3c',
+                              color: '#999',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              cursor: 'pointer'
+                            }}
+                            title="Reset to 8 default sample fine-art albums"
+                          >
+                            <RotateCcw style={{ width: '11px', height: '11px' }} />
+                            <span>Reset Defaults</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleOpenAddAlbumModal}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '6px',
+                              padding: '6px 12px',
+                              backgroundColor: '#ff6a13',
+                              border: 'none',
+                              color: '#fff',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              fontWeight: 700,
+                              cursor: 'pointer'
+                            }}
+                          >
+                            <Plus style={{ width: '12px', height: '12px' }} />
+                            <span>Add Album</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {/* Albums Grid in Admin */}
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
+                        gap: '14px'
+                      }}>
+                        {albumsList.map((album, idx) => {
+                          const isHomeLive = idx < 12;
+                          return (
+                            <div
+                              key={album.id || idx}
+                              style={{
+                                backgroundColor: isHomeLive ? '#12121b' : '#0c0c12',
+                                border: isHomeLive ? '1px solid #ff6a13' : '1px solid #1f1f2e',
+                                borderRadius: '6px',
+                                overflow: 'hidden',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                transition: 'all 0.2s ease',
+                                position: 'relative'
+                              }}
+                            >
+                              {/* Image Thumbnail & Badge */}
+                              <div style={{ position: 'relative', height: '140px', overflow: 'hidden', backgroundColor: '#07070a' }}>
+                                <img
+                                  src={album.coverImage}
+                                  alt={album.title}
+                                  style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                                />
+                                <div style={{
+                                  position: 'absolute',
+                                  top: '8px',
+                                  left: '8px',
+                                  display: 'flex',
+                                  gap: '6px',
+                                  flexWrap: 'wrap'
+                                }}>
+                                  <span style={{
+                                    fontSize: '9px',
+                                    fontWeight: 700,
+                                    textTransform: 'uppercase',
+                                    padding: '2px 7px',
+                                    borderRadius: '3px',
+                                    backgroundColor: isHomeLive ? '#ff6a13' : 'rgba(0,0,0,0.7)',
+                                    color: '#fff',
+                                    letterSpacing: '0.05em'
+                                  }}>
+                                    {isHomeLive ? `★ HOME CARD #${idx + 1}` : `GALLERY VAULT #${idx + 1}`}
+                                  </span>
+
+                                  <span style={{
+                                    fontSize: '9px',
+                                    fontWeight: 600,
+                                    padding: '2px 6px',
+                                    borderRadius: '3px',
+                                    backgroundColor: 'rgba(0,0,0,0.75)',
+                                    color: '#ffd7b3'
+                                  }}>
+                                    {album.category || 'Weddings'}
+                                  </span>
+                                </div>
+
+                                <div style={{
+                                  position: 'absolute',
+                                  bottom: '8px',
+                                  right: '8px',
+                                  fontSize: '9px',
+                                  fontWeight: 600,
+                                  padding: '2px 6px',
+                                  borderRadius: '3px',
+                                  backgroundColor: 'rgba(0,0,0,0.8)',
+                                  color: '#fff'
+                                }}>
+                                  {album.photoCount || 40} Photos
+                                </div>
+                              </div>
+
+                              {/* Card Body */}
+                              <div style={{ padding: '12px', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+                                <div>
+                                  <h5 style={{ margin: '0 0 2px 0', fontSize: '13px', color: '#fff', fontWeight: 700 }}>
+                                    {album.title}
+                                  </h5>
+                                  <p style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#ffaa66', fontStyle: 'italic' }}>
+                                    {album.subtitle || 'Fine Art Celebration'}
+                                  </p>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', color: '#888899' }}>
+                                    {album.location && (
+                                      <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                        <MapPin style={{ width: '10px', height: '10px', color: '#ff6a13' }} />
+                                        <span>{album.location}</span>
+                                      </span>
+                                    )}
+                                    {album.date && <span>• {album.date}</span>}
+                                  </div>
+                                </div>
+
+                                {/* Actions */}
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: '8px', marginTop: '12px', paddingTop: '8px', borderTop: '1px solid #1a1a26' }}>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleOpenEditAlbumModal(album)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px 8px',
+                                      backgroundColor: '#1b1b28',
+                                      border: '1px solid #333348',
+                                      color: '#eee',
+                                      borderRadius: '3px',
+                                      fontSize: '11px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <Edit style={{ width: '11px', height: '11px', color: '#ff6a13' }} />
+                                    <span>Edit</span>
+                                  </button>
+
+                                  <button
+                                    type="button"
+                                    onClick={() => handleDeleteAlbum(album.id, album.title)}
+                                    style={{
+                                      display: 'inline-flex',
+                                      alignItems: 'center',
+                                      gap: '4px',
+                                      padding: '4px 8px',
+                                      backgroundColor: '#201015',
+                                      border: '1px solid #4a1520',
+                                      color: '#ff6677',
+                                      borderRadius: '3px',
+                                      fontSize: '11px',
+                                      cursor: 'pointer'
+                                    }}
+                                  >
+                                    <Trash2 style={{ width: '11px', height: '11px' }} />
+                                    <span>Delete</span>
+                                  </button>
+                                </div>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+
+
+                  {/* --------------------------------------------------------- */}
+                  {/* SECTION 3.5: TRUSTED PARTNERS (SINGLE ROW SLIDER) */}
+                  {/* --------------------------------------------------------- */}
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.partners?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.partners?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 3.5
+                          </span>
+                          {homeCms.partners?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
+                        <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
+                          Trusted Partners & Clients (Single Row 4-Card Slider)
+                        </h3>
+                        <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                          Displays prestigious client and partner logos with names in a single horizontal sliding row (4 at a time).
+                        </p>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('partners', 'Trusted Partners Section')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.partners?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.partners?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.partners?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.partners?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.partners?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.partners?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+                        <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Clients / Partners</span>
+                      </div>
+                    </div>
+
+                    {homeCms.partners?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Trusted Partners Section is currently HIDDEN from visitors.</strong> Click Unhide above to display it on the live homepage.</span>
+                      </div>
+                    )}
+
+                    {/* Section Titles Settings */}
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px', marginBottom: '22px', padding: '16px', backgroundColor: '#101018', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ffaa66', marginBottom: '4px' }}>
+                          Section Badge
+                        </label>
+                        <input
+                          type="text"
+                          value={homeCms.partners?.badge || ''}
+                          placeholder="e.g. OUR PRESTIGIOUS NETWORK"
+                          onChange={(e) => saveAndPublishPartnersUpdate({ badge: e.target.value })}
+                          className="admin-input"
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                          Section Title *
+                        </label>
+                        <input
+                          type="text"
+                          value={homeCms.partners?.title || ''}
+                          placeholder="e.g. Trusted Partners"
+                          onChange={(e) => saveAndPublishPartnersUpdate({ title: e.target.value })}
+                          className="admin-input"
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                      <div style={{ gridColumn: '1 / -1' }}>
+                        <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#aaa', marginBottom: '4px' }}>
+                          Section Subtitle Description
+                        </label>
+                        <input
+                          type="text"
+                          value={homeCms.partners?.subtitle || ''}
+                          placeholder="e.g. Honored to collaborate with premier luxury brands, celebrated hospitality icons, and distinguished patrons across Sri Lanka."
+                          onChange={(e) => saveAndPublishPartnersUpdate({ subtitle: e.target.value })}
+                          className="admin-input"
+                          style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                        />
+                      </div>
+                    </div>
+
+                    {/* Add New Partner Card */}
+                    <div style={{ padding: '18px', backgroundColor: '#13131e', border: '1px solid #28283c', borderRadius: '8px', marginBottom: '22px' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '14px' }}>
+                        <Plus style={{ width: '16px', height: '16px', color: '#ff6a13' }} />
+                        <h4 style={{ margin: 0, fontSize: '14px', color: '#fff', fontWeight: 700 }}>
+                          Add New Client / Partner Logo
+                        </h4>
+                      </div>
+
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '14px', alignItems: 'flex-end' }}>
+                        <div>
+                          <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ffaa66', marginBottom: '4px' }}>
+                            Client / Partner Name *
+                          </label>
+                          <input
+                            type="text"
+                            value={newPartnerName}
+                            placeholder="e.g. Cinnamon Grand Colombo"
+                            onChange={(e) => setNewPartnerName(e.target.value)}
+                            className="admin-input"
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '4px' }}>
+                            <label style={{ fontSize: '11px', fontWeight: 600, color: '#ccc' }}>
+                              Partner Logo Image
+                            </label>
+                            <label style={{ fontSize: '10px', color: '#ff6a13', fontWeight: 600, cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <Upload style={{ width: '10px', height: '10px' }} />
+                              <span>{isProcessingPartnerLogo ? 'Processing...' : 'Upload File'}</span>
+                              <input
+                                type="file"
+                                accept="image/*"
+                                style={{ display: 'none' }}
+                                disabled={isProcessingPartnerLogo}
+                                onChange={(e) => handlePartnerLogoUpload(e, false)}
+                              />
+                            </label>
+                          </div>
+                          <input
+                            type="text"
+                            value={newPartnerLogo}
+                            placeholder="Paste image/logo URL or upload file..."
+                            onChange={(e) => setNewPartnerLogo(e.target.value)}
+                            className="admin-input"
+                            style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                          />
+                        </div>
+
+                        <div>
+                          <button
+                            type="button"
+                            onClick={handleAddNewPartner}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              gap: '6px',
+                              width: '100%',
+                              padding: '9px 16px',
+                              backgroundColor: '#ff6a13',
+                              color: '#fff',
+                              border: 'none',
+                              borderRadius: '4px',
+                              fontSize: '12px',
+                              fontWeight: 700,
+                              cursor: 'pointer',
+                              boxShadow: '0 4px 14px rgba(255,106,19,0.35)',
+                              transition: 'all 0.2s ease'
+                            }}
+                          >
+                            <Plus style={{ width: '14px', height: '14px' }} />
+                            <span>Add Partner to Slider</span>
+                          </button>
+                        </div>
+                      </div>
+
+                      {newPartnerLogo && (
+                        <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <span style={{ fontSize: '11px', color: '#888' }}>Logo Preview:</span>
+                          <div style={{ height: '42px', padding: '4px 12px', backgroundColor: '#0b0b12', border: '1px solid #333348', borderRadius: '4px', display: 'flex', alignItems: 'center' }}>
+                            <img src={newPartnerLogo} alt="Preview" style={{ maxHeight: '34px', maxWidth: '120px', objectFit: 'contain' }} />
+                          </div>
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Existing Partners List / Reorder Grid */}
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px', flexWrap: 'wrap', gap: '8px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <Building2 style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
+                          <h4 style={{ margin: 0, fontSize: '14px', color: '#fff', fontWeight: 600 }}>
+                            Active Partners & Clients ({(homeCms.partners?.items || DEFAULT_PARTNERS).length})
+                          </h4>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (window.confirm('Reset partner logos back to luxury fine-art defaults?')) {
+                                saveAndPublishPartnersUpdate({ items: DEFAULT_PARTNERS });
+                              }
+                            }}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '4px 9px',
+                              backgroundColor: '#1b1b28',
+                              border: '1px solid #333348',
+                              color: '#bbb',
+                              borderRadius: '4px',
+                              fontSize: '11px',
+                              cursor: 'pointer'
+                            }}
+                            title="Reset to default luxury brand logos"
+                          >
+                            <RotateCcw style={{ width: '11px', height: '11px' }} />
+                            <span>Reset Default Logos</span>
+                          </button>
+                          <span style={{ fontSize: '11px', color: '#888' }}>
+                            (4 shown at a time)
+                          </span>
+                        </div>
+                      </div>
+
+                      <div style={{
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))',
+                        gap: '12px'
+                      }}>
+                        {(homeCms.partners?.items || DEFAULT_PARTNERS).map((partner, pIdx, allPartners) => {
+                          const isEditing = editingPartnerId === partner.id;
+                          return (
+                            <div
+                              key={partner.id || pIdx}
+                              style={{
+                                padding: '14px',
+                                backgroundColor: isEditing ? '#181828' : '#111119',
+                                border: isEditing ? '1px solid #ff6a13' : '1px solid #222232',
+                                borderRadius: '8px',
+                                display: 'flex',
+                                flexDirection: 'column',
+                                gap: '10px',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              {isEditing ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                  <div>
+                                    <label style={{ fontSize: '10px', color: '#ffaa66', fontWeight: 600 }}>Partner Name</label>
+                                    <input
+                                      type="text"
+                                      value={editingPartnerName}
+                                      onChange={(e) => setEditingPartnerName(e.target.value)}
+                                      className="admin-input"
+                                      style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                    />
+                                  </div>
+                                  <div>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2px' }}>
+                                      <label style={{ fontSize: '10px', color: '#ccc', fontWeight: 600 }}>Logo URL / Upload</label>
+                                      <label style={{ fontSize: '9px', color: '#ff6a13', cursor: 'pointer' }}>
+                                        Upload File
+                                        <input
+                                          type="file"
+                                          accept="image/*"
+                                          style={{ display: 'none' }}
+                                          onChange={(e) => handlePartnerLogoUpload(e, true)}
+                                        />
+                                      </label>
+                                    </div>
+                                    <input
+                                      type="text"
+                                      value={editingPartnerLogo}
+                                      onChange={(e) => setEditingPartnerLogo(e.target.value)}
+                                      className="admin-input"
+                                      style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', fontSize: '11px', boxSizing: 'border-box' }}
+                                    />
+                                  </div>
+                                  <div style={{ display: 'flex', gap: '6px', marginTop: '4px' }}>
+                                    <button
+                                      type="button"
+                                      onClick={() => handleSaveEditPartner(partner.id)}
+                                      style={{ flex: 1, padding: '5px', backgroundColor: '#ff6a13', color: '#fff', border: 'none', borderRadius: '3px', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                    >
+                                      Save
+                                    </button>
+                                    <button
+                                      type="button"
+                                      onClick={() => setEditingPartnerId(null)}
+                                      style={{ padding: '5px 10px', backgroundColor: '#20202e', color: '#bbb', border: '1px solid #333348', borderRadius: '3px', fontSize: '11px', cursor: 'pointer' }}
+                                    >
+                                      Cancel
+                                    </button>
+                                  </div>
+                                </div>
+                              ) : (
+                                <>
+                                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                    {/* Logo Container */}
+                                    <div style={{
+                                      width: '64px',
+                                      height: '46px',
+                                      backgroundColor: '#0a0a10',
+                                      border: '1px solid #28283c',
+                                      borderRadius: '6px',
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      padding: '4px',
+                                      flexShrink: 0
+                                    }}>
+                                      {partner.logo ? (
+                                        <img src={partner.logo} alt={partner.name} style={{ maxHeight: '38px', maxWidth: '56px', objectFit: 'contain' }} />
+                                      ) : (
+                                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', backgroundColor: '#181826', color: '#ffaa66', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '11px', fontWeight: 700 }}>
+                                          {(partner.name || 'P').charAt(0)}
+                                        </div>
+                                      )}
+                                    </div>
+
+                                    {/* Name & Position */}
+                                    <div style={{ flex: 1, minWidth: 0 }}>
+                                      <h5 style={{ margin: '0 0 2px 0', fontSize: '12px', color: '#fff', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                                        {partner.name}
+                                      </h5>
+                                      <span style={{ fontSize: '10px', color: '#888899', fontFamily: 'monospace' }}>
+                                        Position #{pIdx + 1}
+                                      </span>
+                                    </div>
+                                  </div>
+
+                                  {/* Actions Bar */}
+                                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '8px', borderTop: '1px solid #1c1c28' }}>
+                                    <div style={{ display: 'flex', gap: '4px' }}>
+                                      <button
+                                        type="button"
+                                        disabled={pIdx === 0}
+                                        onClick={() => handleMovePartner(pIdx, 'up')}
+                                        style={{
+                                          padding: '4px 6px',
+                                          backgroundColor: '#161622',
+                                          border: '1px solid #2e2e42',
+                                          color: pIdx === 0 ? '#444' : '#ccc',
+                                          borderRadius: '3px',
+                                          cursor: pIdx === 0 ? 'not-allowed' : 'pointer'
+                                        }}
+                                        title="Move earlier in slider"
+                                      >
+                                        <ArrowUp style={{ width: '11px', height: '11px' }} />
+                                      </button>
+                                      <button
+                                        type="button"
+                                        disabled={pIdx === allPartners.length - 1}
+                                        onClick={() => handleMovePartner(pIdx, 'down')}
+                                        style={{
+                                          padding: '4px 6px',
+                                          backgroundColor: '#161622',
+                                          border: '1px solid #2e2e42',
+                                          color: pIdx === allPartners.length - 1 ? '#444' : '#ccc',
+                                          borderRadius: '3px',
+                                          cursor: pIdx === allPartners.length - 1 ? 'not-allowed' : 'pointer'
+                                        }}
+                                        title="Move later in slider"
+                                      >
+                                        <ArrowDown style={{ width: '11px', height: '11px' }} />
+                                      </button>
+                                    </div>
+
+                                    <div style={{ display: 'flex', gap: '6px' }}>
+                                      <button
+                                        type="button"
+                                        onClick={() => handleStartEditPartner(partner)}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px',
+                                          padding: '4px 8px',
+                                          backgroundColor: '#1a1a28',
+                                          border: '1px solid #333348',
+                                          color: '#eee',
+                                          borderRadius: '3px',
+                                          fontSize: '11px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        <Edit style={{ width: '10px', height: '10px', color: '#ff6a13' }} />
+                                        <span>Edit</span>
+                                      </button>
+
+                                      <button
+                                        type="button"
+                                        onClick={() => handleDeletePartner(partner.id, partner.name)}
+                                        style={{
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: '3px',
+                                          padding: '4px 8px',
+                                          backgroundColor: '#201015',
+                                          border: '1px solid #4a1520',
+                                          color: '#ff6677',
+                                          borderRadius: '3px',
+                                          fontSize: '11px',
+                                          cursor: 'pointer'
+                                        }}
+                                      >
+                                        <Trash2 style={{ width: '10px', height: '10px' }} />
+                                        <span>Delete</span>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </>
+                              )}
+                            </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  </div>
+
+
+
+                  {/* --------------------------------------------------------- */}
+                  {/* SECTION 4: STORY & PHILOSOPHY */}
+                  {/* --------------------------------------------------------- */}
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.story?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.story?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 4
+                          </span>
+                          {homeCms.story?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
                           Philosophy & Story Section
                         </h3>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Editorial Narrative</span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('story', 'Philosophy & Story Section')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.story?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.story?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.story?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.story?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.story?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.story?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+                        <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Editorial Narrative</span>
+                      </div>
                     </div>
+
+                    {homeCms.story?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Story Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
 
                     {/* Section Background Controller */}
                     <div style={{ padding: '16px', backgroundColor: '#12121b', border: '1px solid #1f1f2e', borderRadius: '6px', marginBottom: '22px' }}>
@@ -2298,20 +4091,73 @@ export default function AdminPage() {
                   </div>
 
                   {/* --------------------------------------------------------- */}
-                  {/* SECTION 4: REVIEWS SECTION BACKGROUND */}
+                  {/* SECTION 5: REVIEWS SECTION BACKGROUND */}
                   {/* --------------------------------------------------------- */}
-                  <div className="admin-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.reviews?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.reviews?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
-                          SECTION 4
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 5
+                          </span>
+                          {homeCms.reviews?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
                           Reviews Section Background
                         </h3>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Testimonials Grid</span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('reviews', 'Client Reviews Section')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.reviews?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.reviews?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.reviews?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.reviews?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.reviews?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.reviews?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+                        <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Testimonials Grid</span>
+                      </div>
                     </div>
+
+                    {homeCms.reviews?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Reviews Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
 
                     <div style={{ padding: '16px', backgroundColor: '#12121b', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
                       <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
@@ -2416,20 +4262,73 @@ export default function AdminPage() {
                   </div>
 
                   {/* --------------------------------------------------------- */}
-                  {/* SECTION 5: CONTACT CALLOUT BANNER BACKGROUND */}
+                  {/* SECTION 6: CONTACT CALLOUT BANNER BACKGROUND */}
                   {/* --------------------------------------------------------- */}
-                  <div className="admin-card" style={{ padding: '24px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px' }}>
+                  <div className="admin-card" style={{
+                    padding: '24px',
+                    borderColor: homeCms.callout?.isHidden ? '#ff6a13' : undefined,
+                    backgroundColor: homeCms.callout?.isHidden ? '#0e0b10' : undefined
+                  }}>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '18px', flexWrap: 'wrap', gap: '12px' }}>
                       <div>
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
-                          SECTION 5
-                        </span>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                            SECTION 6
+                          </span>
+                          {homeCms.callout?.isHidden && (
+                            <span style={{ fontSize: '10px', padding: '2px 7px', borderRadius: '4px', backgroundColor: '#331500', color: '#ff944d', border: '1px solid #ff6a13', fontWeight: 700 }}>
+                              HIDDEN ON LIVE SITE
+                            </span>
+                          )}
+                        </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
                           Studio Callout Banner Background
                         </h3>
                       </div>
-                      <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Bottom CTA Banner</span>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                        <button
+                          type="button"
+                          onClick={() => toggleSectionVisibility('callout', 'Contact Callout Banner')}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '7px 13px',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 600,
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            backgroundColor: homeCms.callout?.isHidden ? '#ff6a13' : '#14141f',
+                            color: homeCms.callout?.isHidden ? '#fff' : '#ccc',
+                            border: homeCms.callout?.isHidden ? '1px solid #ff6a13' : '1px solid #2e2e42',
+                            boxShadow: homeCms.callout?.isHidden ? '0 2px 10px rgba(255,106,19,0.35)' : 'none'
+                          }}
+                          title={homeCms.callout?.isHidden ? "Click to make this section visible on the live site" : "Click to hide this section from the live site"}
+                        >
+                          {homeCms.callout?.isHidden ? (
+                            <>
+                              <EyeOff style={{ width: '14px', height: '14px' }} />
+                              <span>Section Hidden (Click to Unhide)</span>
+                            </>
+                          ) : (
+                            <>
+                              <Eye style={{ width: '14px', height: '14px', color: '#22c55e' }} />
+                              <span>Visible on Site (Click to Hide)</span>
+                            </>
+                          )}
+                        </button>
+                        <span style={{ fontSize: '11px', color: '#888899', fontFamily: 'monospace' }}>Bottom CTA Banner</span>
+                      </div>
                     </div>
+
+                    {homeCms.callout?.isHidden && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '10px', padding: '10px 14px', backgroundColor: '#261205', border: '1px solid #ff6a13', borderRadius: '6px', marginBottom: '18px', color: '#ffb380', fontSize: '12px' }}>
+                        <EyeOff style={{ width: '16px', height: '16px', color: '#ff6a13', flexShrink: 0 }} />
+                        <span><strong>This Callout Banner Section is currently HIDDEN from visitors.</strong> It will not show up on the live Home page until you click Unhide.</span>
+                      </div>
+                    )}
 
                     <div style={{ padding: '16px', backgroundColor: '#12121b', border: '1px solid #1f1f2e', borderRadius: '6px' }}>
                       <div style={{ display: 'flex', gap: '16px', marginBottom: '14px' }}>
@@ -3307,16 +5206,667 @@ export default function AdminPage() {
               </div>
             )}
 
+            {/* ============================================================= */}
+            {/* DEDICATED SECTION: ALBUMS & GALLERY HUB (REQUESTED BY USER) */}
+            {/* ============================================================= */}
+            {activeSection === 'manage-albums' && (
+              <div>
+                {/* Header Bar */}
+                <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '24px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '4px' }}>
+                      <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ff6a13', fontWeight: 700 }}>
+                        Fine-Art Collections
+                      </span>
+                      <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '4px', backgroundColor: '#181824', color: '#ffaa66', border: '1px solid #332211', fontWeight: 600 }}>
+                        Top 12 Live on Home Showcase
+                      </span>
+                    </div>
+                    <h1 style={{ margin: 0, fontSize: '26px', color: '#fff', fontWeight: 400 }}>
+                      Masterpiece Albums & Showcase Manager
+                    </h1>
+                    <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                      Upload, organize, and curate albums for the Home Page 12-Card Grid & Masterpiece Gallery. Compatible with ANY image format.
+                    </p>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+                    <button
+                      type="button"
+                      onClick={handleResetAlbumsToDefault}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '9px 15px',
+                        backgroundColor: '#13131c',
+                        border: '1px solid #28283c',
+                        color: '#aaa',
+                        borderRadius: '5px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        cursor: 'pointer'
+                      }}
+                      title="Reset albums back to 12 fine-art collections"
+                    >
+                      <RotateCcw style={{ width: '13px', height: '13px' }} />
+                      <span>Reset to Defaults</span>
+                    </button>
+
+                    <Link
+                      to="/gallery"
+                      target="_blank"
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '9px 15px',
+                        backgroundColor: '#161622',
+                        border: '1px solid #3d2b1d',
+                        color: '#ffaa66',
+                        borderRadius: '5px',
+                        fontSize: '12px',
+                        fontWeight: 600,
+                        textDecoration: 'none'
+                      }}
+                    >
+                      <ExternalLink style={{ width: '13px', height: '13px' }} />
+                      <span>View Live Gallery</span>
+                    </Link>
+
+                    <button
+                      type="button"
+                      onClick={() => handleOpenAddAlbumModal()}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '7px',
+                        padding: '9px 18px',
+                        backgroundColor: '#ff6a13',
+                        border: 'none',
+                        color: '#fff',
+                        borderRadius: '5px',
+                        fontSize: '12px',
+                        fontWeight: 700,
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(255, 106, 19, 0.4)'
+                      }}
+                    >
+                      <Plus style={{ width: '15px', height: '15px' }} />
+                      <span>+ Upload New Album</span>
+                    </button>
+                  </div>
+                </div>
+
+                {/* KPI & Compatibility Info Ribbon */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginBottom: '22px' }}>
+                  <div style={{ padding: '16px', backgroundColor: '#0e0e16', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#ff6a13', fontWeight: 700, letterSpacing: '0.1em' }}>TOTAL ALBUMS</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
+                      <span style={{ fontSize: '26px', color: '#fff', fontWeight: 700 }}>{albumsList.length}</span>
+                      <span style={{ fontSize: '11px', color: '#888' }}>Collections</span>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px', backgroundColor: '#0e0e16', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#22c55e', fontWeight: 700, letterSpacing: '0.1em' }}>HOME SHOWCASE</span>
+                    <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginTop: '6px' }}>
+                      <span style={{ fontSize: '26px', color: '#22c55e', fontWeight: 700 }}>12</span>
+                      <span style={{ fontSize: '11px', color: '#888' }}>Cards (3 Rows × 4)</span>
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px', backgroundColor: '#0e0e16', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#38bdf8', fontWeight: 700, letterSpacing: '0.1em' }}>ANY FORMAT COMPATIBLE</span>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '8px', flexWrap: 'wrap' }}>
+                      {['JPG', 'PNG', 'WEBP', 'AVIF', 'HEIC', 'TIFF', 'BMP', 'URL'].map(fmt => (
+                        <span key={fmt} style={{ fontSize: '9px', padding: '2px 5px', borderRadius: '3px', backgroundColor: '#181826', color: '#cbd5e1', border: '1px solid #28283c', fontWeight: 600 }}>
+                          {fmt}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div style={{ padding: '16px', backgroundColor: '#0e0e16', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#f59e0b', fontWeight: 700, letterSpacing: '0.1em' }}>SMART COMPRESSION</span>
+                    <p style={{ margin: '6px 0 0 0', fontSize: '11px', color: '#aaa', lineHeight: 1.4 }}>
+                      Large camera exports auto-scaled to 1920px web-grade resolution (~150KB). Fast load, zero storage quota limit.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Universal Quick Drop Upload Zone */}
+                <div
+                  onDragOver={(e) => { e.preventDefault(); setIsQuickDragOver(true); }}
+                  onDragLeave={() => setIsQuickDragOver(false)}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    setIsQuickDragOver(false);
+                    const file = e.dataTransfer.files?.[0];
+                    if (file) {
+                      handleUniversalCoverFileChange(file).then(() => {
+                        setShowAddAlbumModal(true);
+                      });
+                    }
+                  }}
+                  style={{
+                    padding: '24px',
+                    borderRadius: '8px',
+                    border: isQuickDragOver ? '2px dashed #ff6a13' : '1px dashed #28283c',
+                    backgroundColor: isQuickDragOver ? 'rgba(255,106,19,0.08)' : '#0a0a10',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    gap: '12px',
+                    textAlign: 'center',
+                    marginBottom: '22px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  <div style={{ width: '48px', height: '48px', borderRadius: '50%', backgroundColor: 'rgba(255,106,19,0.12)', border: '1px solid rgba(255,106,19,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <UploadCloud style={{ width: '24px', height: '24px', color: '#ff6a13' }} />
+                  </div>
+                  <div>
+                    <strong style={{ fontSize: '14px', color: '#fff', display: 'block' }}>
+                      Drag & Drop ANY Photo to Upload New Album
+                    </strong>
+                    <span style={{ fontSize: '12px', color: '#777788' }}>
+                      Supports JPEG, PNG, WebP, AVIF, HEIC, TIFF, BMP, or camera exports. Auto-compressed in real-time.
+                    </span>
+                  </div>
+                  <label style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
+                    padding: '7px 16px',
+                    backgroundColor: '#1b1b28',
+                    border: '1px solid #35354a',
+                    color: '#ffaa66',
+                    borderRadius: '5px',
+                    fontSize: '12px',
+                    fontWeight: 600,
+                    cursor: 'pointer'
+                  }}>
+                    <Upload style={{ width: '13px', height: '13px' }} />
+                    <span>Browse Image File</span>
+                    <input
+                      type="file"
+                      accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif,.bmp,.tiff,.tif,.gif,.svg"
+                      style={{ display: 'none' }}
+                      onChange={(e) => {
+                        const file = e.target.files?.[0];
+                        if (file) {
+                          handleUniversalCoverFileChange(file).then(() => {
+                            setShowAddAlbumModal(true);
+                          });
+                        }
+                      }}
+                    />
+                  </label>
+                </div>
+
+                {/* ========================================================= */}
+                {/* SYSTEM CATEGORIES MANAGER (ADD / EDIT / DELETE CATEGORIES) */}
+                {/* ========================================================= */}
+                <div style={{
+                  padding: '20px 22px',
+                  backgroundColor: '#0c0c14',
+                  border: '1px solid #242436',
+                  borderRadius: '8px',
+                  marginBottom: '20px',
+                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Tag style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
+                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ff6a13', fontWeight: 700 }}>
+                          System Categories ({categoriesList.length} Active)
+                        </span>
+                      </div>
+                      <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#888899' }}>
+                        Add your own categories or delete unwanted ones (e.g. Weddings). Only active categories appear across website selectors & filters.
+                      </p>
+                    </div>
+
+                    {/* Add Category Form */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddNewCategory();
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
+                    >
+                      <input
+                        type="text"
+                        value={newCategoryInput}
+                        onChange={(e) => setNewCategoryInput(e.target.value)}
+                        placeholder="New category name (e.g. Wildlife, Fashion)..."
+                        className="admin-input"
+                        style={{ padding: '8px 12px', borderRadius: '4px', fontSize: '12px', width: '250px' }}
+                      />
+                      <button
+                        type="submit"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '8px 16px',
+                          backgroundColor: '#ff6a13',
+                          border: 'none',
+                          color: '#fff',
+                          borderRadius: '4px',
+                          fontSize: '12px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 10px rgba(255,106,19,0.35)'
+                        }}
+                      >
+                        <Plus style={{ width: '14px', height: '14px' }} />
+                        <span>Add Category</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Category Chips List */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid #1a1a28' }}>
+                    {categoriesList.map((cat) => {
+                      const albumCount = albumsList.filter(a => (a.category || '').toLowerCase() === cat.name.toLowerCase()).length;
+                      const isEditing = editingCategoryId === cat.id;
+
+                      return (
+                        <div
+                          key={cat.id}
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            padding: '6px 12px',
+                            borderRadius: '5px',
+                            backgroundColor: '#13131d',
+                            border: '1px solid #2a2a3e',
+                            fontSize: '12px'
+                          }}
+                        >
+                          {isEditing ? (
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              <input
+                                type="text"
+                                autoFocus
+                                value={editingCategoryName}
+                                onChange={(e) => setEditingCategoryName(e.target.value)}
+                                onKeyDown={(e) => {
+                                  if (e.key === 'Enter') handleUpdateCategoryName(cat.id);
+                                  if (e.key === 'Escape') setEditingCategoryId(null);
+                                }}
+                                className="admin-input"
+                                style={{ padding: '3px 8px', fontSize: '11px', width: '130px' }}
+                              />
+                              <button
+                                type="button"
+                                onClick={() => handleUpdateCategoryName(cat.id)}
+                                style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', padding: '2px' }}
+                                title="Save name"
+                              >
+                                <Check style={{ width: '14px', height: '14px' }} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => setEditingCategoryId(null)}
+                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '2px' }}
+                                title="Cancel"
+                              >
+                                <X style={{ width: '14px', height: '14px' }} />
+                              </button>
+                            </div>
+                          ) : (
+                            <>
+                              <span style={{ color: '#fff', fontWeight: 600 }}>{cat.name}</span>
+                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '3px', backgroundColor: '#1c1c2b', color: '#ffaa66', fontWeight: 600 }}>
+                                {albumCount}
+                              </span>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCategoryId(cat.id);
+                                  setEditingCategoryName(cat.name);
+                                }}
+                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '1px' }}
+                                title="Rename category"
+                              >
+                                <Edit style={{ width: '12px', height: '12px' }} />
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteCategoryPrompt(cat.id, cat.name)}
+                                style={{ background: 'none', border: 'none', color: '#ff6677', cursor: 'pointer', padding: '1px' }}
+                                title="Delete category from entire system"
+                              >
+                                <Trash2 style={{ width: '12px', height: '12px' }} />
+                              </button>
+                            </>
+                          )}
+                        </div>
+                      );
+                    })}
+
+                    {categoriesList.length === 0 && (
+                      <span style={{ fontSize: '12px', color: '#ff6677' }}>
+                        No categories in system. Please add at least one category above.
+                      </span>
+                    )}
+
+                    <button
+                      type="button"
+                      onClick={handleResetCategoriesToDefault}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#666',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        marginLeft: 'auto',
+                        textDecoration: 'underline'
+                      }}
+                      title="Reset categories to default initial set"
+                    >
+                      Reset Categories to Defaults
+                    </button>
+                  </div>
+                </div>
+
+                {/* Search & Category Filter Bar */}
+                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', marginBottom: '18px', padding: '14px 18px', backgroundColor: '#0f0f17', border: '1px solid #1c1c28', borderRadius: '6px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
+                    <Search style={{ width: '15px', height: '15px', color: '#888' }} />
+                    <input
+                      type="text"
+                      value={albumSearchQuery}
+                      onChange={(e) => setAlbumSearchQuery(e.target.value)}
+                      placeholder="Search albums by title, client, venue, or year..."
+                      className="admin-input"
+                      style={{ width: '100%', padding: '6px 10px', borderRadius: '4px', fontSize: '12px' }}
+                    />
+                    {albumSearchQuery && (
+                      <button
+                        type="button"
+                        onClick={() => setAlbumSearchQuery('')}
+                        style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', fontSize: '12px' }}
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Category Filter Pills (Dynamically generated ONLY from active categories) */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                    {['ALL', ...categoriesList.map(c => c.name.toUpperCase())].map((cat) => {
+                      const isActive = albumCategoryFilter.toUpperCase() === cat;
+                      return (
+                        <button
+                          key={cat}
+                          type="button"
+                          onClick={() => setAlbumCategoryFilter(cat)}
+                          style={{
+                            padding: '4px 10px',
+                            borderRadius: '4px',
+                            fontSize: '10px',
+                            fontWeight: 700,
+                            letterSpacing: '0.08em',
+                            cursor: 'pointer',
+                            border: isActive ? '1px solid #ff6a13' : '1px solid #222232',
+                            backgroundColor: isActive ? '#ff6a13' : '#14141e',
+                            color: isActive ? '#fff' : '#888899',
+                            transition: 'all 0.15s ease'
+                          }}
+                        >
+                          {cat}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Album Cards Grid */}
+                {(() => {
+                  const filtered = albumsList.filter((a) => {
+                    const albumCat = (a.category || '').toUpperCase();
+                    const matchesCategory = albumCategoryFilter === 'ALL' || albumCat === albumCategoryFilter.toUpperCase();
+                    const q = albumSearchQuery.toLowerCase().trim();
+                    const matchesQuery = !q || (a.title && a.title.toLowerCase().includes(q)) || (a.subtitle && a.subtitle.toLowerCase().includes(q)) || (a.location && a.location.toLowerCase().includes(q)) || (a.date && a.date.toLowerCase().includes(q));
+                    return matchesCategory && matchesQuery;
+                  });
+
+                  if (filtered.length === 0) {
+                    return (
+                      <div style={{ padding: '60px 20px', textAlign: 'center', backgroundColor: '#0d0d14', border: '1px solid #1c1c28', borderRadius: '8px' }}>
+                        <p style={{ margin: 0, fontSize: '14px', color: '#aaa' }}>No albums found matching "{albumSearchQuery}".</p>
+                        <button
+                          type="button"
+                          onClick={() => { setAlbumSearchQuery(''); setAlbumCategoryFilter('ALL'); }}
+                          style={{ marginTop: '12px', padding: '6px 14px', backgroundColor: '#181826', border: '1px solid #ff6a13', color: '#ff6a13', borderRadius: '4px', fontSize: '12px', cursor: 'pointer' }}
+                        >
+                          Clear Filters
+                        </button>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '16px' }}>
+                      {filtered.map((album) => {
+                        const globalIdx = albumsList.findIndex(a => a.id === album.id);
+                        const isLiveOnHome = globalIdx < 12;
+
+                        return (
+                          <div
+                            key={album.id}
+                            className="admin-card"
+                            style={{
+                              padding: '14px',
+                              display: 'flex',
+                              flexDirection: 'column',
+                              justifyContent: 'space-between',
+                              borderColor: isLiveOnHome ? '#2a221d' : '#181824',
+                              position: 'relative'
+                            }}
+                          >
+                            {/* Card Cover with Badges */}
+                            <div style={{ position: 'relative', width: '100%', aspectRatio: '16 / 10', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#050508', marginBottom: '12px' }}>
+                              <img
+                                src={album.coverImage}
+                                alt={album.title}
+                                style={{ width: '100%', height: '100%', objectFit: 'cover' }}
+                              />
+                              <div style={{ position: 'absolute', inset: 0, background: 'linear-gradient(to top, rgba(0,0,0,0.7) 0%, transparent 60%)' }} />
+
+                              {/* Priority / Home Badge */}
+                              <div style={{ position: 'absolute', top: '8px', left: '8px', zIndex: 10 }}>
+                                {isLiveOnHome ? (
+                                  <span style={{ fontSize: '9px', fontWeight: 700, padding: '2px 7px', borderRadius: '4px', backgroundColor: '#ff6a13', color: '#fff', boxShadow: '0 2px 6px rgba(0,0,0,0.6)' }}>
+                                    ★ Live Home #{globalIdx + 1}
+                                  </span>
+                                ) : (
+                                  <span style={{ fontSize: '9px', fontWeight: 600, padding: '2px 7px', borderRadius: '4px', backgroundColor: 'rgba(0,0,0,0.7)', color: '#aaa', border: '1px solid rgba(255,255,255,0.1)' }}>
+                                    ● Gallery Archive
+                                  </span>
+                                )}
+                              </div>
+
+                              {/* Category Badge */}
+                              <div style={{ position: 'absolute', top: '8px', right: '8px', zIndex: 10 }}>
+                                <span style={{ fontSize: '9px', fontWeight: 700, textTransform: 'uppercase', padding: '2px 7px', borderRadius: '4px', backgroundColor: 'rgba(0,0,0,0.75)', color: '#ffaa66', border: '1px solid rgba(255,106,19,0.3)' }}>
+                                  {album.category || 'Weddings'}
+                                </span>
+                              </div>
+
+                              {/* Photo Count badge */}
+                              <div style={{ position: 'absolute', bottom: '8px', right: '8px', zIndex: 10 }}>
+                                <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', backgroundColor: 'rgba(0,0,0,0.8)', color: '#ddd' }}>
+                                  {album.photoCount || 40} Photos
+                                </span>
+                              </div>
+                            </div>
+
+                            {/* Card Details */}
+                            <div style={{ marginBottom: '12px', flex: 1 }}>
+                              <h4 style={{ margin: '0 0 2px 0', fontSize: '15px', color: '#fff', fontWeight: 600 }}>
+                                {album.title}
+                              </h4>
+                              {album.subtitle && (
+                                <p style={{ margin: '0 0 6px 0', fontSize: '11px', color: '#ffaa66', fontStyle: 'italic' }}>
+                                  {album.subtitle}
+                                </p>
+                              )}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#777788', flexWrap: 'wrap' }}>
+                                {album.location && (
+                                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                    <MapPin style={{ width: '11px', height: '11px', color: '#ff6a13' }} />
+                                    <span>{album.location}</span>
+                                  </span>
+                                )}
+                                {album.date && (
+                                  <span>• {album.date}</span>
+                                )}
+                              </div>
+                            </div>
+
+                            {/* Actions & Reordering Controls */}
+                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', paddingTop: '10px', borderTop: '1px solid #1a1a26' }}>
+                              {/* Move Priority buttons */}
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                <button
+                                  type="button"
+                                  disabled={globalIdx === 0}
+                                  onClick={() => handleMoveAlbum(album.id, 'up')}
+                                  style={{
+                                    padding: '3px 6px',
+                                    backgroundColor: globalIdx === 0 ? '#101017' : '#181826',
+                                    border: '1px solid #28283c',
+                                    color: globalIdx === 0 ? '#444' : '#ffaa66',
+                                    borderRadius: '3px',
+                                    fontSize: '10px',
+                                    cursor: globalIdx === 0 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Promote higher in Home Showcase"
+                                >
+                                  ▲
+                                </button>
+                                <button
+                                  type="button"
+                                  disabled={globalIdx === albumsList.length - 1}
+                                  onClick={() => handleMoveAlbum(album.id, 'down')}
+                                  style={{
+                                    padding: '3px 6px',
+                                    backgroundColor: globalIdx === albumsList.length - 1 ? '#101017' : '#181826',
+                                    border: '1px solid #28283c',
+                                    color: globalIdx === albumsList.length - 1 ? '#444' : '#ffaa66',
+                                    borderRadius: '3px',
+                                    fontSize: '10px',
+                                    cursor: globalIdx === albumsList.length - 1 ? 'not-allowed' : 'pointer'
+                                  }}
+                                  title="Demote lower in Home Showcase"
+                                >
+                                  ▼
+                                </button>
+                              </div>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenEditAlbumModal(album)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '5px 10px',
+                                    backgroundColor: '#181826',
+                                    border: '1px solid #333346',
+                                    color: '#eee',
+                                    borderRadius: '4px',
+                                    fontSize: '11px',
+                                    fontWeight: 600,
+                                    cursor: 'pointer'
+                                  }}
+                                >
+                                  <Edit style={{ width: '12px', height: '12px', color: '#ff6a13' }} />
+                                  <span>Edit</span>
+                                </button>
+
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteAlbum(album.id, album.title)}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '5px 8px',
+                                    backgroundColor: '#1c1014',
+                                    border: '1px solid #4a1520',
+                                    color: '#ff6677',
+                                    borderRadius: '4px',
+                                    fontSize: '11px',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Delete Album"
+                                >
+                                  <Trash2 style={{ width: '12px', height: '12px' }} />
+                                </button>
+                              </div>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  );
+                })()}
+              </div>
+            )}
+
             {/* CLIENT GALLERY */}
             {activeSection === 'customize-gallery' && (
               <div>
                 <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '16px', marginBottom: '28px' }}>
-                  <h1 style={{ margin: 0, fontSize: '24px', color: '#fff', fontWeight: 400 }}>Customize Client Gallery</h1>
-                  <button onClick={() => triggerGenericSave('Client Gallery Page')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 20px', backgroundColor: '#ff6a13', border: 'none', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  <h1 style={{ margin: 0, fontSize: '24px', color: '#fff', fontWeight: 400 }}>Customize Gallery Page</h1>
+                  <button onClick={() => triggerGenericSave('Gallery Page')} style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '9px 20px', backgroundColor: '#ff6a13', border: 'none', color: '#fff', borderRadius: '4px', fontSize: '12px', fontWeight: 600, cursor: 'pointer' }}>
                     <Save style={{ width: '14px', height: '14px' }} />
                     <span>Save Changes</span>
                   </button>
                 </div>
+
+                {/* Primary CTA to open dedicated album manager */}
+                <div className="admin-card" style={{ padding: '24px', backgroundColor: '#0f0f18', border: '1px solid #28283c', borderRadius: '8px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '16px', marginBottom: '20px' }}>
+                  <div>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', color: '#ff6a13', fontWeight: 700, letterSpacing: '0.1em' }}>MASTERPIECE ALBUMS HUB</span>
+                    <h3 style={{ margin: '4px 0 6px 0', fontSize: '18px', color: '#fff', fontWeight: 600 }}>Manage All Client Albums ({albumsList.length} Collections)</h3>
+                    <p style={{ margin: 0, fontSize: '12px', color: '#888899', maxWidth: '560px' }}>
+                      Upload new albums in any format (JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, URLs) with auto-compression, multi-photo collections, and reordering.
+                    </p>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setActiveSection('manage-albums')}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      padding: '10px 20px',
+                      backgroundColor: '#ff6a13',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(255, 106, 19, 0.4)'
+                    }}
+                  >
+                    <Layers style={{ width: '15px', height: '15px' }} />
+                    <span>Open Dedicated Album Manager →</span>
+                  </button>
+                </div>
+
                 <div className="admin-card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '18px' }}>
                   <div>
                     <label style={{ display: 'block', fontSize: '11px', color: '#aaa', textTransform: 'uppercase', marginBottom: '6px', fontFamily: 'monospace' }}>Gallery Portal Headline</label>
@@ -3478,6 +6028,463 @@ export default function AdminPage() {
           </div>
 
         </div>
+
+        {/* ========================================================= */}
+        {/* UNIVERSAL MULTI-FORMAT ALBUM UPLOAD & EDIT MODAL */}
+        {/* ========================================================= */}
+        {showAddAlbumModal && (
+          <div
+            style={{
+              position: 'fixed',
+              inset: 0,
+              backgroundColor: 'rgba(0, 0, 0, 0.88)',
+              backdropFilter: 'blur(10px)',
+              zIndex: 9999,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '16px'
+            }}
+          >
+            <div
+              style={{
+                width: '100%',
+                maxWidth: '680px',
+                maxHeight: '92vh',
+                overflowY: 'auto',
+                backgroundColor: '#0c0c14',
+                border: '1px solid #2d2d42',
+                borderRadius: '12px',
+                padding: '28px',
+                boxShadow: '0 30px 80px rgba(0, 0, 0, 0.9)',
+                boxSizing: 'border-box'
+              }}
+            >
+              {/* Modal Header */}
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', paddingBottom: '14px', borderBottom: '1px solid #1c1c28' }}>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '10px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ff6a13', fontWeight: 700 }}>
+                      {editingAlbum ? 'UPDATE ALBUM' : 'NEW MASTERPIECE ALBUM'}
+                    </span>
+                    <span style={{ fontSize: '9px', padding: '2px 6px', borderRadius: '3px', backgroundColor: '#181826', color: '#38bdf8', border: '1px solid #28283c', fontWeight: 600 }}>
+                      All Formats Compatible
+                    </span>
+                  </div>
+                  <h3 style={{ margin: '4px 0 0 0', fontSize: '20px', color: '#fff', fontWeight: 600 }}>
+                    {editingAlbum ? 'Edit Album Details & Photos' : 'Upload & Publish Album'}
+                  </h3>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowAddAlbumModal(false);
+                    setEditingAlbum(null);
+                    setAlbumUploadStats(null);
+                  }}
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    color: '#888',
+                    cursor: 'pointer',
+                    padding: '4px'
+                  }}
+                >
+                  <X style={{ width: '22px', height: '22px' }} />
+                </button>
+              </div>
+
+              <form onSubmit={handleSaveAlbum} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+
+                {/* Universal Cover Image Upload Zone */}
+                <div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <label style={{ fontSize: '11px', fontWeight: 700, color: '#ffaa66', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+                      Album Cover Photo * (ANY FORMAT)
+                    </label>
+                    <span style={{ fontSize: '10px', color: '#888' }}>
+                      JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, or URL
+                    </span>
+                  </div>
+
+                  {/* Drag & Drop Zone */}
+                  <div
+                    onDragOver={(e) => { e.preventDefault(); setIsCoverDragOver(true); }}
+                    onDragLeave={() => setIsCoverDragOver(false)}
+                    onDrop={(e) => {
+                      e.preventDefault();
+                      setIsCoverDragOver(false);
+                      const file = e.dataTransfer.files?.[0];
+                      if (file) handleUniversalCoverFileChange(file);
+                    }}
+                    style={{
+                      padding: '16px',
+                      borderRadius: '8px',
+                      border: isCoverDragOver ? '2px dashed #ff6a13' : '1px dashed #2e2e42',
+                      backgroundColor: isCoverDragOver ? 'rgba(255,106,19,0.08)' : '#101018',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: '10px',
+                      textAlign: 'center',
+                      transition: 'all 0.2s ease',
+                      marginBottom: '10px'
+                    }}
+                  >
+                    {isProcessingAlbumImage ? (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#ffaa66', fontSize: '12px', padding: '12px' }}>
+                        <RotateCcw className="animate-spin" style={{ width: '16px', height: '16px' }} />
+                        <span>Processing and optimizing image format...</span>
+                      </div>
+                    ) : (
+                      <>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                          <label style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            padding: '8px 16px',
+                            backgroundColor: '#ff6a13',
+                            color: '#fff',
+                            borderRadius: '5px',
+                            fontSize: '12px',
+                            fontWeight: 700,
+                            cursor: 'pointer',
+                            boxShadow: '0 2px 10px rgba(255, 106, 19, 0.35)'
+                          }}>
+                            <Upload style={{ width: '14px', height: '14px' }} />
+                            <span>Choose Image File</span>
+                            <input
+                              type="file"
+                              accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif,.bmp,.tiff,.tif,.gif,.svg"
+                              style={{ display: 'none' }}
+                              onChange={(e) => {
+                                const file = e.target.files?.[0];
+                                if (file) handleUniversalCoverFileChange(file);
+                              }}
+                            />
+                          </label>
+                          <span style={{ fontSize: '12px', color: '#666' }}>or drag & drop your photo file here</span>
+                        </div>
+                      </>
+                    )}
+                  </div>
+
+                  {/* URL Input Fallback */}
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <input
+                      type="text"
+                      required
+                      value={albumForm.coverImage}
+                      placeholder="Or paste direct image URL (https://...)"
+                      onChange={(e) => setAlbumForm({ ...albumForm, coverImage: e.target.value })}
+                      className="admin-input"
+                      style={{ flex: 1, padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  {/* Optimization Badge & Preview */}
+                  {albumUploadStats && (
+                    <div style={{ marginTop: '8px', padding: '8px 12px', backgroundColor: 'rgba(34, 197, 94, 0.1)', border: '1px solid rgba(34, 197, 94, 0.3)', borderRadius: '5px', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '11px', color: '#4ade80' }}>
+                      <CheckCircle2 style={{ width: '14px', height: '14px', flexShrink: 0 }} />
+                      <span>
+                        <strong>Format converted:</strong> {albumUploadStats.format} ({albumUploadStats.originalSize}) → Optimized to {albumUploadStats.outputFormat} ({albumUploadStats.compressedSize})
+                      </span>
+                    </div>
+                  )}
+
+                  {albumForm.coverImage && (
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '14px', padding: '10px', backgroundColor: '#13131d', borderRadius: '6px', border: '1px solid #202030' }}>
+                      <img
+                        src={albumForm.coverImage}
+                        alt="Cover Preview"
+                        style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                      />
+                      <div>
+                        <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600, display: 'block' }}>Active Cover Photo</span>
+                        <span style={{ fontSize: '10px', color: '#22c55e' }}>✓ Ready for live showcase & gallery</span>
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Title & Subtitle */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ffaa66', marginBottom: '4px' }}>
+                      Album Title *
+                    </label>
+                    <input
+                      type="text"
+                      required
+                      value={albumForm.title}
+                      placeholder="e.g. Kasun & Shenali"
+                      onChange={(e) => setAlbumForm({ ...albumForm, title: e.target.value })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                      Subtitle / Ceremony Type
+                    </label>
+                    <input
+                      type="text"
+                      value={albumForm.subtitle}
+                      placeholder="e.g. Sacred Poruwa & Kandyan Elegance"
+                      onChange={(e) => setAlbumForm({ ...albumForm, subtitle: e.target.value })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Category & Photo Count */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '4px' }}>
+                      <label style={{ fontSize: '11px', fontWeight: 600, color: '#ccc' }}>
+                        Category *
+                      </label>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const name = prompt('Enter new category name to add to system:');
+                          if (name && name.trim()) {
+                            const created = handleAddNewCategory(name.trim());
+                            if (created) {
+                              setAlbumForm(prev => ({ ...prev, category: created.name }));
+                            }
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          color: '#ff6a13',
+                          fontSize: '11px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          padding: 0
+                        }}
+                      >
+                        + Add New Category
+                      </button>
+                    </div>
+                    <select
+                      value={albumForm.category}
+                      onChange={(e) => setAlbumForm({ ...albumForm, category: e.target.value })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', backgroundColor: '#14141f' }}
+                    >
+                      {categoriesList.map(cat => (
+                        <option key={cat.id} value={cat.name}>{cat.name}</option>
+                      ))}
+                      {albumForm.category && !categoriesList.some(c => c.name.toLowerCase() === albumForm.category.toLowerCase()) && (
+                        <option value={albumForm.category}>{albumForm.category} (Current)</option>
+                      )}
+                    </select>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                      Total Photo Count (in album)
+                    </label>
+                    <input
+                      type="number"
+                      min="1"
+                      max="999"
+                      value={albumForm.photoCount}
+                      onChange={(e) => setAlbumForm({ ...albumForm, photoCount: parseInt(e.target.value) || 40 })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Location & Date */}
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                      Location / Venue
+                    </label>
+                    <input
+                      type="text"
+                      value={albumForm.location}
+                      placeholder="e.g. The Grand Kandyan Hotel, Kandy"
+                      onChange={(e) => setAlbumForm({ ...albumForm, location: e.target.value })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                      Date / Season
+                    </label>
+                    <input
+                      type="text"
+                      value={albumForm.date}
+                      placeholder="e.g. October 2026"
+                      onChange={(e) => setAlbumForm({ ...albumForm, date: e.target.value })}
+                      className="admin-input"
+                      style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+
+                {/* Multiple Photos in this Album (Optional Collection) */}
+                <div style={{ padding: '14px', backgroundColor: '#101018', border: '1px solid #1c1c28', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '10px', flexWrap: 'wrap', gap: '8px' }}>
+                    <div>
+                      <strong style={{ fontSize: '12px', color: '#fff', display: 'block' }}>
+                        Album Gallery Photos ({albumForm.photos?.length || 0} Photos)
+                      </strong>
+                      <span style={{ fontSize: '11px', color: '#888' }}>
+                        Add multiple photos to this album. Compatible with any image format.
+                      </span>
+                    </div>
+
+                    <label style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '6px 14px',
+                      backgroundColor: '#1b1b28',
+                      border: '1px solid #333346',
+                      color: '#ffaa66',
+                      borderRadius: '4px',
+                      fontSize: '11px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}>
+                      <Plus style={{ width: '13px', height: '13px' }} />
+                      <span>+ Add More Photos</span>
+                      <input
+                        type="file"
+                        multiple
+                        accept="image/*,.jpg,.jpeg,.png,.webp,.avif,.heic,.heif,.bmp,.tiff,.tif,.gif,.svg"
+                        style={{ display: 'none' }}
+                        onChange={(e) => handleUniversalMultiplePhotosUpload(e.target.files)}
+                      />
+                    </label>
+                  </div>
+
+                  {albumForm.photos && albumForm.photos.length > 0 && (
+                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(70px, 1fr))', gap: '8px', maxHeight: '180px', overflowY: 'auto', padding: '4px' }}>
+                      {albumForm.photos.map((photoUrl, pIdx) => {
+                        const isCover = photoUrl === albumForm.coverImage;
+                        return (
+                          <div
+                            key={pIdx}
+                            style={{
+                              position: 'relative',
+                              aspectRatio: '1 / 1',
+                              borderRadius: '4px',
+                              overflow: 'hidden',
+                              border: isCover ? '2px solid #ff6a13' : '1px solid #28283c'
+                            }}
+                          >
+                            <img src={photoUrl} alt={`Photo ${pIdx + 1}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                            
+                            {/* Actions on hover */}
+                            <div style={{ position: 'absolute', inset: 0, backgroundColor: 'rgba(0,0,0,0.6)', opacity: 0, transition: 'opacity 0.2s ease', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '4px' }} className="hover:opacity-100">
+                              {!isCover && (
+                                <button
+                                  type="button"
+                                  onClick={() => handleSetPhotoAsCover(photoUrl)}
+                                  style={{ padding: '2px 4px', backgroundColor: '#ff6a13', border: 'none', color: '#fff', fontSize: '9px', borderRadius: '2px', cursor: 'pointer' }}
+                                  title="Set as Cover"
+                                >
+                                  Cover
+                                </button>
+                              )}
+                              <button
+                                type="button"
+                                onClick={() => handleRemovePhotoFromAlbum(pIdx)}
+                                style={{ padding: '2px 4px', backgroundColor: '#ff4444', border: 'none', color: '#fff', fontSize: '9px', borderRadius: '2px', cursor: 'pointer' }}
+                                title="Remove"
+                              >
+                                ×
+                              </button>
+                            </div>
+
+                            {isCover && (
+                              <span style={{ position: 'absolute', bottom: '2px', left: '2px', fontSize: '8px', padding: '1px 3px', backgroundColor: '#ff6a13', color: '#fff', borderRadius: '2px', fontWeight: 700 }}>
+                                Cover
+                              </span>
+                            )}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+
+                {/* Description */}
+                <div>
+                  <label style={{ display: 'block', fontSize: '11px', fontWeight: 600, color: '#ccc', marginBottom: '4px' }}>
+                    Album Description / Client Story (Optional)
+                  </label>
+                  <textarea
+                    rows={2}
+                    value={albumForm.description}
+                    placeholder="Brief background story about this couple or milestone event..."
+                    onChange={(e) => setAlbumForm({ ...albumForm, description: e.target.value })}
+                    className="admin-input"
+                    style={{ width: '100%', padding: '8px 12px', borderRadius: '4px', fontSize: '12px', boxSizing: 'border-box', resize: 'vertical' }}
+                  />
+                </div>
+
+                {/* Action Buttons */}
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '10px', paddingTop: '14px', borderTop: '1px solid #1e1e2d' }}>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowAddAlbumModal(false);
+                      setEditingAlbum(null);
+                      setAlbumUploadStats(null);
+                    }}
+                    style={{
+                      padding: '9px 18px',
+                      backgroundColor: '#181824',
+                      border: '1px solid #333346',
+                      color: '#ccc',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 600,
+                      cursor: 'pointer'
+                    }}
+                  >
+                    Cancel
+                  </button>
+                  <button
+                    type="submit"
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      padding: '9px 22px',
+                      backgroundColor: '#ff6a13',
+                      border: 'none',
+                      color: '#fff',
+                      borderRadius: '6px',
+                      fontSize: '12px',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      boxShadow: '0 4px 14px rgba(255, 106, 19, 0.4)'
+                    }}
+                  >
+                    <Save style={{ width: '14px', height: '14px' }} />
+                    <span>{editingAlbum ? 'Save Album Changes' : 'Publish & Add to Showcase'}</span>
+                  </button>
+                </div>
+
+              </form>
+            </div>
+          </div>
+        )}
 
         {/* Hero Image Framing & Live Preview Editor Modal */}
         <HeroImageEditorModal

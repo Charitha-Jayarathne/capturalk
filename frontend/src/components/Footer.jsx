@@ -86,13 +86,8 @@ export default function Footer({ onOpenBooking }) {
                 </Link>
               </li>
               <li style={{ marginBottom: '16px' }}>
-                <Link to="/portfolio" className="text-neutral-300 hover:text-[#ff6a13] hover:translate-x-1 transition-all inline-flex items-center gap-1.5">
-                  Curated Portfolio
-                </Link>
-              </li>
-              <li style={{ marginBottom: '16px' }}>
-                <Link to="/client-gallery" className="text-neutral-300 hover:text-[#ff6a13] hover:translate-x-1 transition-all inline-flex items-center gap-1.5">
-                  Private Client Gallery
+                <Link to="/gallery" className="text-neutral-300 hover:text-[#ff6a13] hover:translate-x-1 transition-all inline-flex items-center gap-1.5">
+                  Masterpiece Gallery
                 </Link>
               </li>
               <li style={{ marginBottom: '16px' }}>

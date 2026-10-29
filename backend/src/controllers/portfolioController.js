@@ -57,7 +57,7 @@ export const createPortfolioItem = async (req, res, next) => {
     // If an image file is attached via multipart/form-data
     if (req.file) {
       const uploadResult = await uploadBufferToCloudinary(req.file.buffer, {
-        folder: `capturalk/portfolio/${category || 'weddings'}`,
+        folder: `capturalk/portfolio/${category || 'general'}`,
       });
       imageUrl = uploadResult.secure_url;
       cloudinaryPublicId = uploadResult.public_id;
@@ -72,7 +72,7 @@ export const createPortfolioItem = async (req, res, next) => {
 
     const newItem = await Portfolio.create({
       title,
-      category: category || 'Weddings',
+      category: category || 'General',
       imageUrl,
       cloudinaryPublicId,
       description: description || '',

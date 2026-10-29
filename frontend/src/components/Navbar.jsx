@@ -36,10 +36,9 @@ export default function Navbar({ onOpenBooking }) {
   const navLinks = [
     { name: 'HOME', path: '/', num: '01' },
     { name: 'ABOUT US', path: '/about', num: '02' },
-    { name: 'PORTFOLIO', path: '/portfolio', num: '03' },
-    { name: 'CLIENT GALLERY', path: '/client-gallery', num: '04' },
-    { name: 'REVIEWS', path: '/reviews', num: '05' },
-    { name: 'CONTACT US', path: '/contact', num: '06' },
+    { name: 'GALLERY', path: '/gallery', num: '03' },
+    { name: 'REVIEWS', path: '/reviews', num: '04' },
+    { name: 'CONTACT US', path: '/contact', num: '05' },
   ];
 
   return (

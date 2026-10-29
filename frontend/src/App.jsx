@@ -7,8 +7,7 @@ import ScrollToTop from './components/ScrollToTop';
 
 import Home from './pages/Home';
 import AboutUs from './pages/AboutUs';
-import PortfolioPage from './pages/PortfolioPage';
-import ClientGallery from './pages/ClientGallery';
+import GalleryPage from './pages/GalleryPage';
 import ReviewsPage from './pages/ReviewsPage';
 import ContactUs from './pages/ContactUs';
 import AdminPage from './pages/AdminPage';
@@ -31,8 +30,9 @@ function AppContent() {
         <Routes>
           <Route path="/" element={<Home onOpenBooking={openBooking} />} />
           <Route path="/about" element={<AboutUs onOpenBooking={openBooking} />} />
-          <Route path="/portfolio" element={<PortfolioPage onOpenBooking={openBooking} />} />
-          <Route path="/client-gallery" element={<ClientGallery onOpenBooking={openBooking} />} />
+          <Route path="/gallery" element={<GalleryPage onOpenBooking={openBooking} />} />
+          <Route path="/client-gallery" element={<Navigate to="/gallery" replace />} />
+          <Route path="/portfolio" element={<Navigate to="/gallery" replace />} />
           <Route path="/reviews" element={<ReviewsPage onOpenBooking={openBooking} />} />
           <Route path="/contact" element={<ContactUs onOpenBooking={openBooking} />} />
           <Route path="/admin" element={<AdminPage />} />

@@ -151,6 +151,10 @@ export default function Hero({ onOpenBooking, content }) {
   const isNearRight = mousePos.width > 0 && mousePos.x >= mousePos.width - 200;
   const isInsideHero = mousePos.x >= 0;
 
+  if (heroContent?.isHidden) {
+    return null;
+  }
+
   return (
     <section 
       id="home" 
@@ -158,7 +162,7 @@ export default function Hero({ onOpenBooking, content }) {
       onMouseLeave={() => setMousePos({ x: -999, y: -999, width: 0 })}
       onTouchStart={handleTouchStart}
       onTouchEnd={handleTouchEnd}
-      className="relative isolate w-full h-screen min-h-[640px] flex flex-col justify-between items-center text-white overflow-hidden select-none"
+      className="relative isolate w-full min-h-[100dvh] h-[100dvh] min-h-[600px] sm:min-h-[680px] flex flex-col justify-between items-center text-white overflow-hidden select-none"
     >
       {/* Background Slideshow Images (Crossfade & Smooth Transition) */}
       <div className="absolute inset-0 z-0 overflow-hidden pointer-events-none">
@@ -193,54 +197,54 @@ export default function Hero({ onOpenBooking, content }) {
         <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/20 pointer-events-none z-10" />
       </div>
 
-      {/* Left Proximity-Activated Navigation Arrow Zone */}
+      {/* Left Proximity-Activated Navigation Arrow Zone (offset below navbar) */}
       {backgrounds.length > 1 && (
         <div 
-          className="hero-side-zone hero-side-zone-left absolute left-0 top-0 bottom-0 w-28 sm:w-44 z-30 flex items-center justify-start pl-4 sm:pl-8 pointer-events-auto"
+          className="hero-side-zone hero-side-zone-left absolute left-0 top-20 bottom-16 sm:top-24 sm:bottom-20 w-24 sm:w-44 z-30 flex items-center justify-start pl-3 sm:pl-8 pointer-events-auto"
         >
           <button
             type="button"
             onClick={handlePrev}
             aria-label="Previous Hero Image"
             title="Previous Image"
-            className="hero-nav-arrow hero-nav-arrow-left p-3.5 sm:p-4 rounded-full border backdrop-blur-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ff6a13]"
+            className="hero-nav-arrow hero-nav-arrow-left p-3 sm:p-4 rounded-full border backdrop-blur-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ff6a13]"
           >
-            <ChevronLeft className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
+            <ChevronLeft className="w-5 h-5 sm:w-7 sm:h-7 stroke-[2.2]" />
           </button>
         </div>
       )}
 
-      {/* Right Proximity-Activated Navigation Arrow Zone */}
+      {/* Right Proximity-Activated Navigation Arrow Zone (offset below navbar) */}
       {backgrounds.length > 1 && (
         <div 
-          className="hero-side-zone hero-side-zone-right absolute right-0 top-0 bottom-0 w-28 sm:w-44 z-30 flex items-center justify-end pr-4 sm:pr-8 pointer-events-auto"
+          className="hero-side-zone hero-side-zone-right absolute right-0 top-20 bottom-16 sm:top-24 sm:bottom-20 w-24 sm:w-44 z-30 flex items-center justify-end pr-3 sm:pr-8 pointer-events-auto"
         >
           <button
             type="button"
             onClick={handleNext}
             aria-label="Next Hero Image"
             title="Next Image"
-            className="hero-nav-arrow hero-nav-arrow-right p-3.5 sm:p-4 rounded-full border backdrop-blur-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ff6a13]"
+            className="hero-nav-arrow hero-nav-arrow-right p-3 sm:p-4 rounded-full border backdrop-blur-md cursor-pointer focus:outline-none focus:ring-2 focus:ring-[#ff6a13]"
           >
-            <ChevronRight className="w-6 h-6 sm:w-7 sm:h-7 stroke-[2.2]" />
+            <ChevronRight className="w-5 h-5 sm:w-7 sm:h-7 stroke-[2.2]" />
           </button>
         </div>
       )}
 
-      {/* Top spacer to balance vertical centering with the navbar */}
-      <div className="w-full pt-20" />
+      {/* Top spacer to guarantee clearance below the fixed navbar */}
+      <div className="w-full pt-20 sm:pt-24 md:pt-28 shrink-0" />
 
       {/* Main Center Content (Luxury Didone Typography) */}
       <div className="w-full max-w-5xl mx-auto px-4 flex flex-col items-center justify-center text-center z-10 my-auto">
         
         {/* Masked Baseline Container for CAPTURA LK */}
-        <div className="overflow-hidden py-4 px-4">
+        <div className="overflow-hidden py-3 sm:py-4 px-2 sm:px-4">
           <div className="animate-masked-slide-up">
             <h1 
-              className="font-didone text-5xl sm:text-7xl md:text-8xl lg:text-9xl font-light uppercase text-white animate-luxury-breathe cursor-default group select-none drop-shadow-[0_4px_28px_rgba(0,0,0,0.85)]"
+              className="font-didone text-4xl sm:text-7xl md:text-8xl lg:text-9xl font-light uppercase text-white animate-luxury-breathe cursor-default group select-none drop-shadow-[0_4px_28px_rgba(0,0,0,0.85)]"
             >
               <span>{heroContent?.title?.split(' ')?.[0] || 'CAPTURA'}</span>
-              <span style={{ marginLeft: 'clamp(20px, 3.5vw, 48px)' }}>
+              <span style={{ marginLeft: 'clamp(14px, 3.5vw, 48px)' }}>
                 {heroContent?.title?.split(' ')?.[1] || 'LK'}
               </span>
             </h1>
@@ -248,21 +252,28 @@ export default function Hero({ onOpenBooking, content }) {
         </div>
 
         {/* Masked Baseline Container for Subtitle */}
-        <div className="overflow-hidden mt-4 sm:mt-5 py-1">
-          <p className="text-xs sm:text-sm md:text-base uppercase font-light text-neutral-200 drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] animate-masked-subtitle">
+        <div className="overflow-hidden mt-3 sm:mt-5 py-1">
+          <p className="text-[11px] sm:text-sm md:text-base uppercase font-light text-neutral-200 tracking-wider sm:tracking-normal drop-shadow-[0_4px_10px_rgba(0,0,0,0.8)] animate-masked-subtitle">
             {heroContent?.tagline || 'INSPIRED BY THE ELEGANCE OF SIMPLICITY'}
           </p>
         </div>
       </div>
 
       {/* Bottom Center: Scroll Down Chevron Arrow & Atmosphere Dots */}
-      <div className="w-full pb-8 flex flex-col items-center justify-center z-10">
+      <div className="w-full pb-6 sm:pb-8 flex flex-col items-center justify-center z-10">
         <a
           href="#story"
+          onClick={(e) => {
+            e.preventDefault();
+            const targetEl = document.getElementById('story') || document.getElementById('categories');
+            if (targetEl) {
+              targetEl.scrollIntoView({ behavior: 'smooth' });
+            }
+          }}
           className="group flex flex-col items-center gap-1 text-neutral-400 hover:text-white transition-colors animate-float-down"
           aria-label="Scroll down to explore"
         >
-          <ChevronDown className="w-7 h-7 sm:w-8 sm:h-8 stroke-[1.25] text-white/80 group-hover:text-[#ff6a13] transition-colors" />
+          <ChevronDown className="w-6 h-6 sm:w-8 sm:h-8 stroke-[1.25] text-white/80 group-hover:text-[#ff6a13] transition-colors" />
         </a>
 
         {/* Ambient Mood Switcher / Slide Progress Indicator */}

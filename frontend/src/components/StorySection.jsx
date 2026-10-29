@@ -77,13 +77,17 @@ export default function StorySection({ onOpenBooking, content }) {
     }
   };
 
+  if (storyContent?.isHidden) {
+    return null;
+  }
+
   return (
     <section 
       id="story" 
-      className="relative text-white flex items-center overflow-hidden"
+      className="relative text-white flex items-center overflow-hidden scroll-mt-20 sm:scroll-mt-24"
       style={{
-        paddingTop: '80px',
-        paddingBottom: '48px',
+        paddingTop: 'clamp(64px, 8vw, 96px)',
+        paddingBottom: 'clamp(48px, 6vw, 64px)',
         backgroundColor: isCustomBg ? 'transparent' : '#060608',
         backgroundImage: isCustomBg 
           ? `linear-gradient(rgba(6, 6, 8, ${bgOpacity}), rgba(6, 6, 8, ${bgOpacity})), url("${storyContent.customBgImage}")`

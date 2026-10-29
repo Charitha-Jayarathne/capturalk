@@ -2503,3 +2503,14 @@
   }
 }
 
+/* Global Fixed Navbar Offset & Responsive Smooth Scrolling */
+html {
+  scroll-behavior: smooth;
+  scroll-padding-top: 4.5rem;
+}
+@media (min-width: 640px) {
+  html {
+    scroll-padding-top: 5.5rem;
+  }
+}
+

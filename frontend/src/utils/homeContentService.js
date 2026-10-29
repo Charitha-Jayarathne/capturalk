@@ -81,10 +81,63 @@ export const DEFAULT_CATEGORY_ITEMS = [
   }
 ];
 
+// Default Trusted Partners & Prestigious Clients (Single Row Slider)
+export const DEFAULT_PARTNERS = [
+  {
+    id: 'partner-1',
+    name: 'Shangri-La Colombo',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><path d="M130 10 C125 18 120 22 115 22 C122 25 125 30 130 35 C135 30 138 25 145 22 C140 22 135 18 130 10 Z" fill="%23d4a373"/><path d="M110 22 C116 26 122 28 130 28 C138 28 144 26 150 22" stroke="%23ff944d" stroke-width="1.5" fill="none"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="13" font-weight="500" letter-spacing="4">SHANGRI-LA</text></svg>',
+    order: 1
+  },
+  {
+    id: 'partner-2',
+    name: 'Cinnamon Grand Luxury',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><circle cx="130" cy="20" r="12" stroke="%23ff944d" stroke-width="1.5" fill="none"/><path d="M130 12 L130 28 M122 20 L138 20" stroke="%23d4a373" stroke-width="1.5"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="12" font-weight="500" letter-spacing="3.5">CINNAMON GRAND</text></svg>',
+    order: 2
+  },
+  {
+    id: 'partner-3',
+    name: 'Jetwing Hotels & Resorts',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><path d="M118 24 C124 16 130 14 136 24 C140 18 144 18 146 24" stroke="%23ff944d" stroke-width="2" stroke-linecap="round" fill="none"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="13" font-weight="500" letter-spacing="4">JETWING HOTELS</text></svg>',
+    order: 3
+  },
+  {
+    id: 'partner-4',
+    name: 'Galle Face Hotel Heritage',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><path d="M120 12 L130 6 L140 12 L140 24 L130 30 L120 24 Z" stroke="%23ff944d" stroke-width="1.5" fill="none"/><text x="130" y="21" text-anchor="middle" fill="%23d4a373" font-family="Georgia,serif" font-size="8" font-weight="bold">1864</text><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="12" font-weight="500" letter-spacing="3">GALLE FACE HOTEL</text></svg>',
+    order: 4
+  },
+  {
+    id: 'partner-5',
+    name: 'The Grand Kandyan',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><path d="M130 8 L133 16 L142 16 L135 21 L138 29 L130 24 L122 29 L125 21 L118 16 L127 16 Z" fill="%23d4a373"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="12" font-weight="500" letter-spacing="3.5">GRAND KANDYAN</text></svg>',
+    order: 5
+  },
+  {
+    id: 'partner-6',
+    name: 'Amanwella Sanctuary',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><rect x="123" y="10" width="14" height="14" stroke="%23ff944d" stroke-width="1.5" fill="none" transform="rotate(45 130 17)"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="13" font-weight="500" letter-spacing="5">AMANWELLA</text></svg>',
+    order: 6
+  },
+  {
+    id: 'partner-7',
+    name: 'Anantara Peace Haven',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><path d="M120 22 C125 14 135 14 140 22 M124 26 C128 20 132 20 136 26" stroke="%23d4a373" stroke-width="1.5" fill="none"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="13" font-weight="500" letter-spacing="4">ANANTARA</text></svg>',
+    order: 7
+  },
+  {
+    id: 'partner-8',
+    name: 'Heritance Kandalama',
+    logo: 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 260 70" width="260" height="70"><circle cx="130" cy="18" r="9" stroke="%23ff944d" stroke-width="1.5" fill="none"/><path d="M125 18 C128 13 132 13 135 18 C132 23 128 23 125 18 Z" fill="%23d4a373"/><text x="130" y="55" text-anchor="middle" fill="%23ffffff" font-family="Georgia,serif" font-size="13" font-weight="500" letter-spacing="4">HERITANCE</text></svg>',
+    order: 8
+  }
+];
+
 // 2. CATEGORY SHOWCASE SECTION (Dynamic Categories with Items Array + Legacy Fallbacks)
 export const DEFAULT_HOME_CONTENT = {
   // 1. HERO SECTION
   hero: {
+    isHidden: false,
     title: 'CAPTURA LK',
     subtitle: 'Fine Art Wedding & Event Photography',
     tagline: 'CAPTURING SOULS, CRAFTING MEMORIES',
@@ -112,6 +165,7 @@ export const DEFAULT_HOME_CONTENT = {
   },
 
   categories: {
+    isHidden: false,
     sectionTitle: 'Our Signature Categories',
     items: DEFAULT_CATEGORY_ITEMS,
     // 5 Sliding Photos for Column 1: Weddings (legacy mirrors)
@@ -139,8 +193,33 @@ export const DEFAULT_HOME_CONTENT = {
     bgOpacity: 0.40
   },
 
-  // 3. STORY SECTION
+  // 3. RECENT ALBUMS & STORIES SHOWCASE (2 Lines x 4 Cards = 8 Recent Albums)
+  albums: {
+    isHidden: false,
+    badge: 'CURATED CLIENT STORIES',
+    title: 'Recent Masterpieces & Albums',
+    subtitle: 'A glimpse into our most recently documented nuptials, intimate celebrations, and fine-art milestones across Sri Lanka.',
+    viewAllButtonText: 'EXPLORE FULL GALLERY VAULT',
+    bgType: 'default', // 'default' or 'custom'
+    customBgImage: '',
+    bgOpacity: 0.40
+  },
+
+  // 3.5 TRUSTED PARTNERS & CLIENTS (Single row slider, 4 visible at a time)
+  partners: {
+    isHidden: false,
+    badge: 'OUR PRESTIGIOUS NETWORK',
+    title: 'Trusted Partners',
+    subtitle: 'Proudly commissioned by iconic luxury hospitality brands, bespoke event ateliers, and celebrated clientele across Sri Lanka.',
+    items: DEFAULT_PARTNERS,
+    bgType: 'default',
+    customBgImage: '',
+    bgOpacity: 0.40
+  },
+
+  // 4. STORY SECTION
   story: {
+    isHidden: false,
     headingPart1: 'Inspired by the',
     headingPart2: 'Elegance of',
     headingPart3: 'Simplicity.',
@@ -154,6 +233,7 @@ export const DEFAULT_HOME_CONTENT = {
 
   // 4. REVIEWS SECTION
   reviews: {
+    isHidden: false,
     title: 'Reviews',
     bgType: 'default',
     customBgImage: '',
@@ -162,6 +242,7 @@ export const DEFAULT_HOME_CONTENT = {
 
   // 5. CALLOUT BANNER SECTION
   callout: {
+    isHidden: false,
     tagline: "Let's Talk About Your Special Day",
     heading: 'Get In Touch With Our Studio',
     subtext: 'Reach out to our team to discuss dates, bespoke photography packages, and cinematic storytelling.',
@@ -334,6 +415,7 @@ function mergeCategories(savedCat = {}) {
   return {
     ...DEFAULT_HOME_CONTENT.categories,
     ...savedCat,
+    isHidden: Boolean(savedCat?.isHidden),
     items: cleanItems,
     weddingSlides: weddingCategory?.slides || DEFAULT_HOME_CONTENT.categories.weddingSlides,
     graduationSlides: graduationCategory?.slides || DEFAULT_HOME_CONTENT.categories.graduationSlides,
@@ -347,6 +429,33 @@ function mergeCategories(savedCat = {}) {
   };
 }
 
+function mergePartners(savedPartners = {}) {
+  let items = savedPartners?.items;
+  if (!items || !Array.isArray(items) || items.length === 0) {
+    items = DEFAULT_PARTNERS;
+  }
+  const cleanItems = items.map((p, idx) => {
+    let logo = p.logo || '';
+    if (logo.includes('images.unsplash.com') && (logo.includes('599305445671') || logo.includes('542744094') || logo.includes('516876437184') || logo.includes('551836022') || logo.includes('572021335469') || logo.includes('590402494682') || logo.includes('507679799987') || logo.includes('563986768609'))) {
+      const matchDef = DEFAULT_PARTNERS.find(d => d.name.toLowerCase() === (p.name || '').toLowerCase()) || DEFAULT_PARTNERS[idx % DEFAULT_PARTNERS.length];
+      if (matchDef) logo = matchDef.logo;
+    }
+    return {
+      id: p.id || `partner-${Date.now()}-${idx}`,
+      name: p.name || `Partner ${idx + 1}`,
+      logo: logo,
+      order: typeof p.order === 'number' ? p.order : idx + 1
+    };
+  });
+
+  return {
+    ...DEFAULT_HOME_CONTENT.partners,
+    ...savedPartners,
+    isHidden: Boolean(savedPartners?.isHidden),
+    items: cleanItems
+  };
+}
+
 /**
  * Synchronous get from localStorage with merge.
  */
@@ -356,11 +465,13 @@ export function getHomeContent() {
     if (saved) {
       const parsed = JSON.parse(saved);
       return {
-        hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero },
+        hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
         categories: mergeCategories(parsed.categories),
-        story: { ...DEFAULT_HOME_CONTENT.story, ...parsed.story },
-        reviews: { ...DEFAULT_HOME_CONTENT.reviews, ...parsed.reviews },
-        callout: { ...DEFAULT_HOME_CONTENT.callout, ...parsed.callout }
+        albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
+        partners: mergePartners(parsed.partners),
+        story: { ...DEFAULT_HOME_CONTENT.story, ...parsed.story, isHidden: Boolean(parsed.story?.isHidden) },
+        reviews: { ...DEFAULT_HOME_CONTENT.reviews, ...parsed.reviews, isHidden: Boolean(parsed.reviews?.isHidden) },
+        callout: { ...DEFAULT_HOME_CONTENT.callout, ...parsed.callout, isHidden: Boolean(parsed.callout?.isHidden) }
       };
     }
   } catch (err) {
@@ -384,11 +495,13 @@ export async function getHomeContentAsync() {
         if (req.result) {
           const parsed = req.result;
           const merged = {
-            hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero },
+            hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
             categories: mergeCategories(parsed.categories),
-            story: { ...DEFAULT_HOME_CONTENT.story, ...parsed.story },
-            reviews: { ...DEFAULT_HOME_CONTENT.reviews, ...parsed.reviews },
-            callout: { ...DEFAULT_HOME_CONTENT.callout, ...parsed.callout }
+            albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
+            partners: mergePartners(parsed.partners),
+            story: { ...DEFAULT_HOME_CONTENT.story, ...parsed.story, isHidden: Boolean(parsed.story?.isHidden) },
+            reviews: { ...DEFAULT_HOME_CONTENT.reviews, ...parsed.reviews, isHidden: Boolean(parsed.reviews?.isHidden) },
+            callout: { ...DEFAULT_HOME_CONTENT.callout, ...parsed.callout, isHidden: Boolean(parsed.callout?.isHidden) }
           };
           // Sync to localStorage if not there
           try {

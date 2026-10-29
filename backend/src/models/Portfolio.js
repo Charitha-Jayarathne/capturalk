@@ -10,8 +10,8 @@ const portfolioSchema = new mongoose.Schema(
     category: {
       type: String,
       required: [true, 'Category is required'],
-      enum: ['Weddings', 'Portraits', 'Pre-Shoot', 'Events', 'Cinematography', 'Commercial'],
-      default: 'Weddings',
+      trim: true,
+      default: 'General',
     },
     imageUrl: {
       type: String,

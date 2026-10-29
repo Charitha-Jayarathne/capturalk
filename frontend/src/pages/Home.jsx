@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import Hero from '../components/Hero';
 import CategoryShowcase from '../components/CategoryShowcase';
+import RecentAlbumsShowcase from '../components/RecentAlbumsShowcase';
+import TrustedPartnersSection from '../components/TrustedPartnersSection';
 import StorySection from '../components/StorySection';
 import RevealOnScroll from '../components/RevealOnScroll';
 import { Star, ShieldCheck, ArrowRight } from 'lucide-react';
@@ -38,30 +40,48 @@ export default function Home({ onOpenBooking }) {
   const calloutBgOpacity = content?.callout?.bgOpacity !== undefined ? content.callout.bgOpacity : 0.40;
 
   return (
-    <div>
+    <div className={content?.hero?.isHidden ? "pt-20 sm:pt-24 lg:pt-28" : ""}>
       {/* Fullscreen Hero Section */}
-      <Hero onOpenBooking={onOpenBooking} content={content.hero} />
+      {!content?.hero?.isHidden && (
+        <Hero onOpenBooking={onOpenBooking} content={content.hero} />
+      )}
 
       {/* 5 Vertical Expandable Category Panels with Auto-Sliders & 360 Video */}
-      <CategoryShowcase onOpenBooking={onOpenBooking} content={content.categories} />
+      {!content?.categories?.isHidden && (
+        <CategoryShowcase onOpenBooking={onOpenBooking} content={content.categories} />
+      )}
+
+      {/* Section: 2 Lines x 4 Cards = 8 Recent Albums Showcase */}
+      {!content?.albums?.isHidden && (
+        <RecentAlbumsShowcase onOpenBooking={onOpenBooking} content={content.albums} />
+      )}
+
+      {/* Section: Single Row Slider (4 visible at a time) - Trusted Partners */}
+      {!content?.partners?.isHidden && (
+        <TrustedPartnersSection content={content.partners} />
+      )}
 
       {/* Story Section: Elegance & Philosophy */}
-      <StorySection onOpenBooking={onOpenBooking} content={content.story} />
+      {!content?.story?.isHidden && (
+        <StorySection onOpenBooking={onOpenBooking} content={content.story} />
+      )}
 
       {/* Reviews Section */}
-      <section 
-        className="relative overflow-hidden"
-        style={{ 
-          paddingTop: '36px', 
-          paddingBottom: '36px',
-          backgroundColor: reviewsBgCustom ? 'transparent' : '#060608',
-          backgroundImage: reviewsBgCustom 
-            ? `linear-gradient(rgba(6, 6, 8, ${reviewsBgOpacity}), rgba(6, 6, 8, ${reviewsBgOpacity})), url("${content.reviews.customBgImage}")`
-            : 'linear-gradient(to bottom, #060608, #09090e, #07070a)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
+      {!content?.reviews?.isHidden && (
+        <section 
+          id="reviews"
+          className="relative overflow-hidden scroll-mt-20 sm:scroll-mt-24"
+          style={{ 
+            paddingTop: 'clamp(44px, 6vw, 64px)', 
+            paddingBottom: 'clamp(44px, 6vw, 64px)',
+            backgroundColor: reviewsBgCustom ? 'transparent' : '#060608',
+            backgroundImage: reviewsBgCustom 
+              ? `linear-gradient(rgba(6, 6, 8, ${reviewsBgOpacity}), rgba(6, 6, 8, ${reviewsBgOpacity})), url("${content.reviews.customBgImage}")`
+              : 'linear-gradient(to bottom, #060608, #09090e, #07070a)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 relative z-10">
           <RevealOnScroll direction="up" delay={50}>
             <div className="text-center" style={{ marginBottom: '36px' }}>
@@ -147,66 +167,90 @@ export default function Home({ onOpenBooking }) {
           </div>
         </div>
       </section>
+      )}
 
       {/* Bottom Contact Callout Banner */}
-      <section 
-        className="relative"
-        style={{ 
-          paddingTop: '40px', 
-          paddingBottom: '80px',
-          backgroundColor: calloutBgCustom ? 'transparent' : '#07070a',
-          backgroundImage: calloutBgCustom
-            ? `linear-gradient(rgba(7, 7, 10, ${calloutBgOpacity}), rgba(7, 7, 10, ${calloutBgOpacity})), url("${content.callout.customBgImage}")`
-            : 'linear-gradient(to bottom, #07070a, #0d0c11, #050507)',
-          backgroundSize: 'cover',
-          backgroundPosition: 'center'
-        }}
-      >
-        <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
-          <RevealOnScroll direction="up" delay={60}>
-            <div className="w-px h-8 bg-gradient-to-b from-transparent via-[#ff6a13]/60 to-transparent mx-auto mb-6 animate-luxury-line" />
-            <p 
-              className="text-xs uppercase tracking-[0.35em] text-[#ff6a13] font-semibold"
-              style={{ marginBottom: '20px' }}
-            >
-              {content?.callout?.tagline || "Let's Talk About Your Special Day"}
-            </p>
-            <h2 
-              className="font-serif-luxury text-3xl sm:text-5xl lg:text-6xl text-white font-light max-w-3xl mx-auto leading-tight"
-              style={{ marginBottom: '22px' }}
-            >
-              {content?.callout?.heading || "Get In Touch With Our Studio"}
-            </h2>
-            <p 
-              className="text-neutral-300 text-sm sm:text-base max-w-xl mx-auto font-light leading-relaxed"
-              style={{ marginBottom: '38px' }}
-            >
-              {content?.callout?.subtext || "Reach out to our team to discuss dates, bespoke photography packages, and cinematic storytelling."}
-            </p>
-            <div className="flex items-center justify-center">
-              <Link
-                to="/contact"
-                className="group relative inline-flex items-center gap-3.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-white text-xs sm:text-[13px] tracking-[0.22em] uppercase font-semibold transition-all duration-300 hover:scale-105 active:scale-[0.98] overflow-hidden cursor-pointer"
-                style={{
-                  background: 'linear-gradient(135deg, #ff7a29 0%, #ff6a13 50%, #e05300 100%)',
-                  boxShadow: '0 6px 28px rgba(255, 106, 19, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28)'
-                }}
+      {!content?.callout?.isHidden && (
+        <section 
+          id="callout"
+          className="relative scroll-mt-20 sm:scroll-mt-24"
+          style={{ 
+            paddingTop: 'clamp(48px, 6vw, 72px)', 
+            paddingBottom: 'clamp(64px, 8vw, 96px)',
+            backgroundColor: calloutBgCustom ? 'transparent' : '#07070a',
+            backgroundImage: calloutBgCustom
+              ? `linear-gradient(rgba(7, 7, 10, ${calloutBgOpacity}), rgba(7, 7, 10, ${calloutBgOpacity})), url("${content.callout.customBgImage}")`
+              : 'linear-gradient(to bottom, #07070a, #0d0c11, #050507)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center'
+          }}
+        >
+          <div className="max-w-5xl mx-auto px-4 text-center relative z-10">
+            <RevealOnScroll direction="up" delay={60}>
+              <div className="w-px h-8 bg-gradient-to-b from-transparent via-[#ff6a13]/60 to-transparent mx-auto mb-6 animate-luxury-line" />
+              <p 
+                className="text-xs uppercase tracking-[0.35em] text-[#ff6a13] font-semibold"
+                style={{ marginBottom: '20px' }}
               >
-                {/* Ambient dynamic sheen animation */}
-                <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
+                {content?.callout?.tagline || "Let's Talk About Your Special Day"}
+              </p>
+              <h2 
+                className="font-serif-luxury text-3xl sm:text-5xl lg:text-6xl text-white font-light max-w-3xl mx-auto leading-tight"
+                style={{ marginBottom: '22px' }}
+              >
+                {content?.callout?.heading || "Get In Touch With Our Studio"}
+              </h2>
+              <p 
+                className="text-neutral-300 text-sm sm:text-base max-w-xl mx-auto font-light leading-relaxed"
+                style={{ marginBottom: '38px' }}
+              >
+                {content?.callout?.subtext || "Reach out to our team to discuss dates, bespoke photography packages, and cinematic storytelling."}
+              </p>
+              <div className="flex items-center justify-center">
+                <Link
+                  to="/contact"
+                  className="group relative inline-flex items-center gap-3.5 px-8 sm:px-10 py-3.5 sm:py-4 rounded-full text-white text-xs sm:text-[13px] tracking-[0.22em] uppercase font-semibold transition-all duration-300 hover:scale-105 active:scale-[0.98] overflow-hidden cursor-pointer"
+                  style={{
+                    background: 'linear-gradient(135deg, #ff7a29 0%, #ff6a13 50%, #e05300 100%)',
+                    boxShadow: '0 6px 28px rgba(255, 106, 19, 0.45), inset 0 1px 0 rgba(255, 255, 255, 0.28)'
+                  }}
+                >
+                  {/* Ambient dynamic sheen animation */}
+                  <span className="absolute inset-0 w-full h-full bg-gradient-to-r from-transparent via-white/25 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000 ease-out pointer-events-none" />
 
-                <span className="relative z-10 font-sans tracking-[0.22em] drop-shadow-sm">
-                  {content?.callout?.buttonText || "CONTACT US"}
-                </span>
+                  <span className="relative z-10 font-sans tracking-[0.22em] drop-shadow-sm">
+                    {content?.callout?.buttonText || "CONTACT US"}
+                  </span>
 
-                <span className="relative z-10 w-7 h-7 rounded-full bg-black/25 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-black/35 shadow-inner">
-                  <ArrowRight className="w-3.5 h-3.5 text-white" />
-                </span>
-              </Link>
+                  <span className="relative z-10 w-7 h-7 rounded-full bg-black/25 flex items-center justify-center transition-transform duration-300 group-hover:translate-x-1 group-hover:bg-black/35 shadow-inner">
+                    <ArrowRight className="w-3.5 h-3.5 text-white" />
+                  </span>
+                </Link>
+              </div>
+            </RevealOnScroll>
+          </div>
+        </section>
+      )}
+
+      {/* Fallback if all home sections are hidden */}
+      {Boolean(content?.hero?.isHidden) &&
+        Boolean(content?.categories?.isHidden) &&
+        Boolean(content?.albums?.isHidden) &&
+        Boolean(content?.story?.isHidden) &&
+        Boolean(content?.reviews?.isHidden) &&
+        Boolean(content?.callout?.isHidden) && (
+          <div className="min-h-[60vh] flex flex-col items-center justify-center text-center px-4 py-20">
+            <div className="w-12 h-12 rounded-full bg-[#ff6a13]/10 border border-[#ff6a13]/30 flex items-center justify-center mb-4">
+              <span className="text-[#ff6a13] text-xl font-serif">C</span>
             </div>
-          </RevealOnScroll>
-        </div>
-      </section>
+            <h2 className="font-serif-luxury text-2xl sm:text-3xl text-white font-light mb-3">
+              Captura LK Studio
+            </h2>
+            <p className="text-neutral-400 text-sm max-w-md font-light leading-relaxed">
+              All homepage sections are currently set to hidden in the Admin Panel. You can unhide any section from the Admin Panel to display it on the live site.
+            </p>
+          </div>
+      )}
     </div>
   );
 }
