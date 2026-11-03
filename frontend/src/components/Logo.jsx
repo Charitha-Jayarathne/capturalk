@@ -1,8 +1,8 @@
 import React from 'react';
 
-export default function Logo() {
+export default function Logo({ className = '' }) {
   return (
-    <a href="#home" className="inline-flex flex-col group select-none transition-transform hover:scale-105 duration-200">
+    <div className={`inline-flex flex-col group select-none transition-transform hover:scale-105 duration-200 ${className}`}>
       <div className="flex items-center">
         <span className="bg-[#ff6a13] text-white font-black text-lg sm:text-xl px-2 py-0.5 tracking-tight font-sans">
           CAP
@@ -14,6 +14,6 @@ export default function Logo() {
       <span className="text-[9px] sm:text-[10px] font-bold text-neutral-400 tracking-[0.32em] uppercase mt-0.5 pl-0.5">
         EVENTS • LK
       </span>
-    </a>
+    </div>
   );
 }
