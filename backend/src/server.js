@@ -52,7 +52,7 @@ if (process.env.NODE_ENV !== 'test') {
 }
 
 // API Root greeting
-app.get('/', (req, res) => {
+app.get(['/', '/api'], (req, res) => {
   res.json({
     name: 'CapturaLK Backend API',
     version: '1.0.0',
