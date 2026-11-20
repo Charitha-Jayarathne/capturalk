@@ -352,49 +352,7 @@ export default function GalleryPage({ onOpenBooking }) {
           </div>
         )}
 
-        {/* Bottom Booking CTA */}
-        <div style={{
-          marginTop: '70px',
-          padding: '40px 24px',
-          textAlign: 'center',
-          backgroundColor: '#0c0c12',
-          border: '1px solid #1f1f2d',
-          borderRadius: '8px',
-          position: 'relative',
-          overflow: 'hidden'
-        }}>
-          <h2 style={{
-            margin: '0 0 10px 0',
-            fontFamily: '"Playfair Display", Georgia, serif',
-            fontSize: 'clamp(24px, 3.5vw, 36px)',
-            color: '#fff',
-            fontWeight: 400
-          }}>
-            Ready to Create Your Own Masterpiece?
-          </h2>
-          <p style={{ margin: '0 0 24px 0', fontSize: '13px', color: '#888899', maxWidth: '520px', marginLeft: 'auto', marginRight: 'auto' }}>
-            Book your bespoke photography date with Captura LK and let us craft an immortal visual legacy for your celebration.
-          </p>
-          <button
-            type="button"
-            onClick={onOpenBooking}
-            style={{
-              padding: '13px 32px',
-              borderRadius: '9999px',
-              backgroundColor: '#ff6a13',
-              color: '#fff',
-              border: 'none',
-              fontSize: '12px',
-              letterSpacing: '0.18em',
-              textTransform: 'uppercase',
-              fontWeight: 700,
-              cursor: 'pointer',
-              boxShadow: '0 4px 20px rgba(255, 106, 19, 0.45)'
-            }}
-          >
-            Check Studio Availability
-          </button>
-        </div>
+
 
       </div>
 
