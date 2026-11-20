@@ -10,6 +10,7 @@ import portfolioRoutes from './routes/portfolioRoutes.js';
 import uploadRoutes from './routes/uploadRoutes.js';
 import authRoutes from './routes/authRoutes.js';
 import healthRoutes from './routes/healthRoutes.js';
+import contentRoutes from './routes/contentRoutes.js';
 import { notFound, errorHandler } from './middleware/errorMiddleware.js';
 
 // Load environment variables
@@ -73,6 +74,7 @@ app.use('/api/bookings', bookingRoutes);
 app.use('/api/portfolio', portfolioRoutes);
 app.use('/api/upload', uploadRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/content', contentRoutes);
 
 // Error Handling Middlewares
 app.use(notFound);

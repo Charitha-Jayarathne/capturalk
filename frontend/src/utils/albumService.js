@@ -208,9 +208,33 @@ export function getAlbums() {
 }
 
 /**
- * Load async from IndexedDB if available and sync cache
+ * Load async from Backend API first, with IndexedDB and localStorage fallback
  */
 export async function getAlbumsAsync() {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+  // 1. Try Backend API first
+  try {
+    const res = await fetch(`${apiBase}/content/albums`, { cache: 'no-cache' });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.success && Array.isArray(result?.data) && result.data.length > 0) {
+        let list = result.data;
+        if (list.length < DEFAULT_ALBUMS.length) {
+          const existingIds = new Set(list.map(a => a.id));
+          const missing = DEFAULT_ALBUMS.filter(d => !existingIds.has(d.id));
+          list = [...list, ...missing];
+        }
+        const sorted = list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+        } catch (_) {}
+        return sorted;
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to IndexedDB / localStorage
   try {
     const db = await openIndexedDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -268,6 +292,18 @@ export function saveAlbums(albums) {
   }).catch((err) => {
     console.warn('IndexedDB save albums failed', err);
   });
+
+  // Sync to Backend API
+  try {
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    fetch(`${apiBase}/content/albums`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(sorted),
+    }).catch((err) => {
+      console.warn('Failed to sync albums to backend API:', err);
+    });
+  } catch (_) {}
 
   try {
     window.dispatchEvent(new Event('captura_albums_updated'));
