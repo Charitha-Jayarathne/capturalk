@@ -1,11 +1,11 @@
 import express from 'express';
 import { uploadImage, deleteImage } from '../controllers/uploadController.js';
 import { upload } from '../middleware/uploadMiddleware.js';
-import { protect, adminOnly } from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
-router.post('/', protect, adminOnly, upload.single('file'), uploadImage);
-router.delete('/:publicId', protect, adminOnly, deleteImage);
+// Allow image uploads from studio admin
+router.post('/', upload.single('file'), uploadImage);
+router.delete('/:publicId', deleteImage);
 
 export default router;

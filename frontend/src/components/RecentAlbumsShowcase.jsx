@@ -19,15 +19,18 @@ export default function RecentAlbumsShowcase({ content }) {
       }
     });
 
-    const handleUpdate = () => {
-      getAlbumsAsync().then((loaded) => {
-        if (loaded && loaded.length > 0) {
-          setAlbums(loaded.slice(0, 12));
-        } else {
-          const rec = getRecentAlbums(12);
-          setAlbums((rec && rec.length > 0) ? rec : DEFAULT_ALBUMS.slice(0, 12));
-        }
-      });
+    const handleUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setAlbums(e.detail.slice(0, 12));
+      } else {
+        getAlbumsAsync().then((loaded) => {
+          if (loaded) {
+            setAlbums(loaded.slice(0, 12));
+          } else {
+            setAlbums(getRecentAlbums(12));
+          }
+        });
+      }
     };
 
     window.addEventListener('captura_albums_updated', handleUpdate);

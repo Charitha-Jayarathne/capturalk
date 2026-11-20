@@ -714,6 +714,41 @@ export default function AdminPage() {
     setShowAddAlbumModal(true);
   };
 
+  // Helper to upload image to Cloudinary via backend API or fallback to local compression
+  const uploadFileToCloudOrLocal = async (file) => {
+    try {
+      const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('folder', 'capturalk/albums');
+
+      const res = await fetch(`${apiBase}/upload`, {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (res.ok) {
+        const json = await res.json();
+        if (json?.data?.url) {
+          return {
+            url: json.data.url,
+            format: json.data.format ? json.data.format.toUpperCase() : 'CDN',
+            size: `${(json.data.bytes ? json.data.bytes / 1024 : 100).toFixed(0)} KB`
+          };
+        }
+      }
+    } catch (err) {
+      console.warn('Direct upload to /api/upload failed, falling back to local compression:', err);
+    }
+    // Fallback: local compression
+    const result = await processUniversalImageFile(file);
+    return {
+      url: result.dataUrl,
+      format: result.format,
+      size: result.compressedSize
+    };
+  };
+
   // Universal Media Processor: handles any format (JPG, PNG, WebP, AVIF, HEIC, TIFF, BMP, GIF, SVG)
   const handleUniversalCoverFileChange = async (file) => {
     if (!file) return;
@@ -721,24 +756,24 @@ export default function AdminPage() {
     setAlbumUploadStats(null);
 
     try {
-      const result = await processUniversalImageFile(file);
+      const uploaded = await uploadFileToCloudOrLocal(file);
       setAlbumForm(prev => {
-        const updatedPhotos = prev.photos && prev.photos.length > 0 ? prev.photos : [result.dataUrl];
+        const updatedPhotos = prev.photos && prev.photos.length > 0 ? prev.photos : [uploaded.url];
         return {
           ...prev,
-          coverImage: result.dataUrl,
+          coverImage: uploaded.url,
           photos: updatedPhotos,
           photoCount: updatedPhotos.length
         };
       });
       setAlbumUploadStats({
-        format: result.format,
-        outputFormat: result.outputFormat,
-        originalSize: result.originalSize,
-        compressedSize: result.compressedSize,
-        fileName: result.fileName
+        format: uploaded.format,
+        outputFormat: uploaded.format,
+        originalSize: `${(file.size / (1024 * 1024)).toFixed(2)} MB`,
+        compressedSize: uploaded.size,
+        fileName: file.name
       });
-      setSaveSuccessMsg(`✓ Processed ${result.format} (${result.originalSize} → ${result.compressedSize} ${result.outputFormat}). High-definition & web-optimized!`);
+      setSaveSuccessMsg(`✓ Photo uploaded successfully (${uploaded.size}). High-definition & web-optimized!`);
       setTimeout(() => setSaveSuccessMsg(''), 4500);
     } catch (err) {
       console.warn('Universal image processing fallback', err);
@@ -761,8 +796,8 @@ export default function AdminPage() {
 
     for (const f of files) {
       try {
-        const result = await processUniversalImageFile(f);
-        newPhotos.push(result.dataUrl);
+        const uploaded = await uploadFileToCloudOrLocal(f);
+        newPhotos.push(uploaded.url);
       } catch (err) {
         console.warn('Multiple upload item fallback', err);
       }
@@ -808,8 +843,8 @@ export default function AdminPage() {
   };
 
   const handleMoveAlbum = (id, direction) => {
-    moveAlbum(id, direction);
-    setAlbumsList(getAlbums());
+    const updated = moveAlbum(id, direction);
+    setAlbumsList(updated);
     setSaveSuccessMsg(`✓ Album order updated for live showcase.`);
     setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
@@ -856,8 +891,8 @@ export default function AdminPage() {
 
   const handleDeleteAlbum = (id, title) => {
     if (window.confirm(`Are you sure you want to delete the album "${title}"?`)) {
-      deleteAlbum(id);
-      setAlbumsList(getAlbums());
+      const remaining = deleteAlbum(id);
+      setAlbumsList(remaining);
       setSaveSuccessMsg(`✓ Album "${title}" removed.`);
       setTimeout(() => setSaveSuccessMsg(''), 4000);
     }
@@ -865,8 +900,8 @@ export default function AdminPage() {
 
   const handleResetAlbumsToDefault = () => {
     if (window.confirm('Reset albums back to original 12 default fine-art albums?')) {
-      resetAlbums();
-      setAlbumsList(getAlbums());
+      const reset = resetAlbums();
+      setAlbumsList(reset);
       setSaveSuccessMsg('✓ Albums reset to factory 12 fine-art collections.');
       setTimeout(() => setSaveSuccessMsg(''), 4000);
     }
