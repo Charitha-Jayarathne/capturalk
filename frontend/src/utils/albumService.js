@@ -182,35 +182,55 @@ function openIndexedDB() {
   });
 }
 
+// In-memory cache for ultra-fast, quota-safe album access across components
+let cachedAlbums = null;
+
 /**
- * Get all albums sorted by createdAt descending (newest first)
+ * Get all albums sorted by createdAt descending (newest first).
+ * Does NOT auto-merge deleted albums so user deletions are permanent.
  */
 export function getAlbums() {
+  if (cachedAlbums && Array.isArray(cachedAlbums)) {
+    return cachedAlbums;
+  }
   try {
     const saved = localStorage.getItem(STORAGE_KEY);
-    if (saved) {
+    if (saved !== null) {
       const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        // If saved has fewer than 12, merge any missing defaults so 12 cards always display
-        if (parsed.length < DEFAULT_ALBUMS.length) {
-          const existingIds = new Set(parsed.map(a => a.id));
-          const missing = DEFAULT_ALBUMS.filter(d => !existingIds.has(d.id));
-          const merged = [...parsed, ...missing].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
-          return merged;
-        }
-        return parsed.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+      if (Array.isArray(parsed)) {
+        cachedAlbums = parsed;
+        return parsed;
       }
     }
   } catch (err) {
     console.warn('LocalStorage read albums error', err);
   }
-  return [...DEFAULT_ALBUMS].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  cachedAlbums = [...DEFAULT_ALBUMS].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  return cachedAlbums;
 }
 
 /**
- * Load async from IndexedDB if available and sync cache
+ * Load async from Backend API first, with IndexedDB and localStorage fallback
  */
 export async function getAlbumsAsync() {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+  // 1. Try Backend API first
+  try {
+    const res = await fetch(`${apiBase}/content/albums`, { cache: 'no-cache' });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.success && Array.isArray(result?.data)) {
+        cachedAlbums = result.data;
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+        } catch (_) {}
+        return result.data;
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to IndexedDB / localStorage
   try {
     const db = await openIndexedDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -219,18 +239,12 @@ export async function getAlbumsAsync() {
 
     return new Promise((resolve) => {
       req.onsuccess = () => {
-        if (req.result && Array.isArray(req.result) && req.result.length > 0) {
-          let list = req.result;
-          if (list.length < DEFAULT_ALBUMS.length) {
-            const existingIds = new Set(list.map(a => a.id));
-            const missing = DEFAULT_ALBUMS.filter(d => !existingIds.has(d.id));
-            list = [...list, ...missing];
-          }
-          const sorted = list.sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+        if (req.result && Array.isArray(req.result)) {
+          cachedAlbums = req.result;
           try {
-            localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+            localStorage.setItem(STORAGE_KEY, JSON.stringify(req.result));
           } catch (_) {}
-          resolve(sorted);
+          resolve(req.result);
         } else {
           resolve(getAlbums());
         }
@@ -251,12 +265,14 @@ export function getRecentAlbums(limit = 12) {
 }
 
 /**
- * Save albums list to localStorage and IndexedDB and dispatch events
+ * Save albums list to memory, localStorage, IndexedDB, and sync to central Backend API
  */
 export function saveAlbums(albums) {
-  const sorted = [...albums].sort((a, b) => new Date(b.createdAt || 0) - new Date(a.createdAt || 0));
+  const cleanList = Array.isArray(albums) ? albums : [];
+  cachedAlbums = cleanList;
+
   try {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(sorted));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(cleanList));
   } catch (err) {
     console.warn('LocalStorage save albums failed, using IndexedDB', err);
   }
@@ -264,17 +280,29 @@ export function saveAlbums(albums) {
   openIndexedDB().then((db) => {
     const tx = db.transaction(STORE_NAME, 'readwrite');
     const store = tx.objectStore(STORE_NAME);
-    store.put(sorted, STORAGE_KEY);
+    store.put(cleanList, STORAGE_KEY);
   }).catch((err) => {
     console.warn('IndexedDB save albums failed', err);
   });
 
+  // Sync to Backend API
   try {
-    window.dispatchEvent(new Event('captura_albums_updated'));
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    fetch(`${apiBase}/content/albums`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cleanList),
+    }).catch((err) => {
+      console.warn('Failed to sync albums to backend API:', err);
+    });
+  } catch (_) {}
+
+  try {
+    window.dispatchEvent(new CustomEvent('captura_albums_updated', { detail: cleanList }));
     localStorage.setItem('captura_albums_ping', Date.now().toString());
   } catch (_) {}
 
-  return sorted;
+  return cleanList;
 }
 
 /**
@@ -283,7 +311,7 @@ export function saveAlbums(albums) {
  * Smoothly scales camera exports (up to 50MB) down to high-definition web-ready format (~150KB)
  * so it never crashes browser memory or exceeds storage quotas.
  */
-export async function processUniversalImageFile(file, maxWidth = 1920, maxHeight = 1440, quality = 0.85) {
+export async function processUniversalImageFile(file, maxWidth = 1280, maxHeight = 960, quality = 0.72) {
   if (!file) throw new Error('No file selected');
 
   const fileName = file.name || 'unnamed-photo';
@@ -505,18 +533,7 @@ export function deleteAlbum(id) {
  * Reset albums to default fine-art collection
  */
 export function resetAlbums() {
-  try {
-    localStorage.removeItem(STORAGE_KEY);
-    openIndexedDB().then((db) => {
-      const tx = db.transaction(STORE_NAME, 'readwrite');
-      const store = tx.objectStore(STORE_NAME);
-      store.delete(STORAGE_KEY);
-    }).catch(() => {});
-
-    window.dispatchEvent(new Event('captura_albums_updated'));
-    localStorage.setItem('captura_albums_ping', Date.now().toString());
-  } catch (err) {
-    console.error('Reset albums error', err);
-  }
-  return DEFAULT_ALBUMS;
+  cachedAlbums = [...DEFAULT_ALBUMS];
+  saveAlbums(cachedAlbums);
+  return cachedAlbums;
 }

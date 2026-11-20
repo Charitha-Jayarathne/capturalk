@@ -481,9 +481,38 @@ export function getHomeContent() {
 }
 
 /**
- * Load async from IndexedDB if available and populate cache.
+ * Load async from Backend API first (centralized MongoDB), with IndexedDB and localStorage fallbacks.
  */
 export async function getHomeContentAsync() {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+  // 1. Try Backend API first so any browser / device gets current centralized CMS state
+  try {
+    const res = await fetch(`${apiBase}/content/home`, { cache: 'no-cache' });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.success && result?.data) {
+        const parsed = result.data;
+        const merged = {
+          hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
+          categories: mergeCategories(parsed.categories),
+          albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
+          partners: mergePartners(parsed.partners),
+          story: { ...DEFAULT_HOME_CONTENT.story, ...parsed.story, isHidden: Boolean(parsed.story?.isHidden) },
+          reviews: { ...DEFAULT_HOME_CONTENT.reviews, ...parsed.reviews, isHidden: Boolean(parsed.reviews?.isHidden) },
+          callout: { ...DEFAULT_HOME_CONTENT.callout, ...parsed.callout, isHidden: Boolean(parsed.callout?.isHidden) }
+        };
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        } catch (_) {}
+        return merged;
+      }
+    }
+  } catch (err) {
+    // Backend offline or unreachable, proceed with local fallbacks
+  }
+
+  // 2. Fallback to IndexedDB / localStorage
   try {
     const db = await openIndexedDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -520,7 +549,7 @@ export async function getHomeContentAsync() {
 }
 
 /**
- * Save to both localStorage and IndexedDB.
+ * Save to both localStorage, IndexedDB, and sync to central Backend API.
  */
 export function saveHomeContent(newContent) {
   let savedLocal = false;
@@ -539,6 +568,20 @@ export function saveHomeContent(newContent) {
   }).catch((err) => {
     console.warn('IndexedDB save failed', err);
   });
+
+  // Persist to Backend API so all other browsers/devices see the changes
+  try {
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    fetch(`${apiBase}/content/home`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(newContent),
+    }).catch((err) => {
+      console.warn('Failed to sync CMS home content to backend API:', err);
+    });
+  } catch (_) {}
 
   // Dispatch events for same-window and cross-tab reactive updates
   try {

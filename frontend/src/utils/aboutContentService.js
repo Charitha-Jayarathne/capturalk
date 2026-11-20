@@ -117,9 +117,27 @@ export function getAboutContent() {
 }
 
 /**
- * Async get from IndexedDB with cache sync.
+ * Async get from Backend API first, with IndexedDB and LocalStorage fallback.
  */
 export async function getAboutContentAsync() {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+  // 1. Try Backend API first
+  try {
+    const res = await fetch(`${apiBase}/content/about`, { cache: 'no-cache' });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.success && result?.data) {
+        const merged = mergeAboutContent(result.data);
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
+        } catch (_) {}
+        return merged;
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to IndexedDB / localStorage
   try {
     const db = await openIndexedDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -167,7 +185,19 @@ export function saveAboutContent(content) {
     console.warn('IndexedDB write error:', err);
   });
 
-  // 3. Broadcast Event to all tabs & components
+  // 3. Sync to Backend API
+  try {
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    fetch(`${apiBase}/content/about`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(merged),
+    }).catch((err) => {
+      console.warn('Failed to sync about content to backend API:', err);
+    });
+  } catch (_) {}
+
+  // 4. Broadcast Event to all tabs & components
   window.dispatchEvent(new CustomEvent('captura_about_updated', { detail: merged }));
   return merged;
 }

@@ -56,9 +56,26 @@ export function getCategories() {
 }
 
 /**
- * Load async from IndexedDB if available and sync cache
+ * Load async from Backend API first, with IndexedDB and localStorage fallback
  */
 export async function getCategoriesAsync() {
+  const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+
+  // 1. Try Backend API first
+  try {
+    const res = await fetch(`${apiBase}/content/categories`, { cache: 'no-cache' });
+    if (res.ok) {
+      const result = await res.json();
+      if (result?.success && Array.isArray(result?.data)) {
+        try {
+          localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
+        } catch (_) {}
+        return result.data;
+      }
+    }
+  } catch (err) {}
+
+  // 2. Fallback to IndexedDB / localStorage
   try {
     const db = await openIndexedDB();
     const tx = db.transaction(STORE_NAME, 'readonly');
@@ -101,6 +118,18 @@ export function saveCategories(categories) {
   }).catch((err) => {
     console.warn('IndexedDB save categories failed', err);
   });
+
+  // Sync to Backend API
+  try {
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    fetch(`${apiBase}/content/categories`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(cleanList),
+    }).catch((err) => {
+      console.warn('Failed to sync categories to backend API:', err);
+    });
+  } catch (_) {}
 
   try {
     window.dispatchEvent(new CustomEvent('captura_categories_updated', { detail: cleanList }));

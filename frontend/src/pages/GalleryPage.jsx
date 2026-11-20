@@ -25,14 +25,18 @@ export default function GalleryPage({ onOpenBooking }) {
       }
     });
 
-    const handleUpdate = () => {
-      getAlbumsAsync().then((loaded) => {
-        if (loaded && loaded.length > 0) {
-          setAlbums(loaded);
-        } else {
-          setAlbums(getAlbums());
-        }
-      });
+    const handleUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setAlbums(e.detail);
+      } else {
+        getAlbumsAsync().then((loaded) => {
+          if (loaded && Array.isArray(loaded)) {
+            setAlbums(loaded);
+          } else {
+            setAlbums(getAlbums());
+          }
+        });
+      }
     };
 
     const handleCategoriesUpdate = (e) => {
