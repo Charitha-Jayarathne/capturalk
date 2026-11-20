@@ -558,7 +558,7 @@ export default function AdminPage() {
 
   useEffect(() => {
     getAlbumsAsync().then(loaded => {
-      if (loaded && loaded.length > 0) {
+      if (loaded && Array.isArray(loaded)) {
         setAlbumsList(loaded);
       }
     });
