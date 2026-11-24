@@ -109,6 +109,42 @@ export default function AdminPage() {
   const [isCustomizeOpen, setIsCustomizeOpen] = useState(true);
   const [currentTime, setCurrentTime] = useState('');
   const [saveSuccessMsg, setSaveSuccessMsg] = useState('');
+  const [isSyncingCloud, setIsSyncingCloud] = useState(false);
+
+  const syncAllToCloud = async () => {
+    setIsSyncingCloud(true);
+    setSaveSuccessMsg('');
+    const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
+    try {
+      const pHome = fetch(`${apiBase}/content/home`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(homeCms),
+      });
+      const pCats = fetch(`${apiBase}/content/categories`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(categoriesList),
+      });
+      const pAlbums = fetch(`${apiBase}/content/albums`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(albumsList),
+      });
+      const [rHome, rCats, rAlbums] = await Promise.all([pHome, pCats, pAlbums]);
+      if (rHome.ok && rCats.ok && rAlbums.ok) {
+        setSaveSuccessMsg('✅ Successfully Synced All Changes to Cloud Database! Every device and browser will now see these exact updates.');
+      } else {
+        const errJson = await rHome.json().catch(() => ({}));
+        setSaveSuccessMsg(`⚠️ Database sync note: ${errJson.message || 'Make sure 0.0.0.0/0 is whitelisted in MongoDB Atlas Network Access.'}`);
+      }
+    } catch (err) {
+      setSaveSuccessMsg('⚠️ Cloud sync error: ' + err.message);
+    } finally {
+      setIsSyncingCloud(false);
+      setTimeout(() => setSaveSuccessMsg(''), 10000);
+    }
+  };
 
   // HOME PAGE CMS STATE (Synchronized with localStorage & real-time updates)
   const [homeCms, setHomeCms] = useState(getHomeContent());
@@ -1439,6 +1475,31 @@ export default function AdminPage() {
             </div>
 
             <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+              <button
+                type="button"
+                onClick={syncAllToCloud}
+                disabled={isSyncingCloud}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  padding: '6px 14px',
+                  backgroundColor: isSyncingCloud ? '#333' : '#ff6a13',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '4px',
+                  fontSize: '12px',
+                  fontWeight: 600,
+                  cursor: isSyncingCloud ? 'not-allowed' : 'pointer',
+                  letterSpacing: '0.02em',
+                  transition: 'all 0.2s ease',
+                  boxShadow: '0 2px 8px rgba(255,106,19,0.35)',
+                }}
+                title="Save and synchronize all Chrome admin edits to MongoDB Cloud so Edge and all devices see them"
+              >
+                <Upload style={{ width: '13px', height: '13px' }} />
+                <span>{isSyncingCloud ? 'Syncing...' : 'Sync All to Cloud (Cross-Device)'}</span>
+              </button>
               <span style={{ fontSize: '11px', color: '#777788', fontFamily: 'monospace' }}>
                 Colombo LK • {currentTime}
               </span>

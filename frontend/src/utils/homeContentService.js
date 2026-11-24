@@ -7,7 +7,7 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85' },
+      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: '/category-events-live.jpg' },
       { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
       { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
       { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
