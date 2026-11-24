@@ -7,7 +7,7 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: '/category-events-live.jpg' },
+      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=85' },
       { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
       { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
       { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
@@ -481,10 +481,10 @@ export function getHomeContent() {
 export async function getHomeContentAsync() {
   const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
-  // 1. Try Backend API first with fast 600ms timeout so page loads instantly
+  // 1. Try Backend API first with generous 8000ms timeout for full photo payload
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 600);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiBase}/content/home`, { cache: 'no-cache', signal: controller.signal });
     clearTimeout(timeoutId);
     if (res.ok) {
@@ -503,6 +503,12 @@ export async function getHomeContentAsync() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(merged));
         } catch (_) {}
+        // Also persist to IndexedDB for instant, quota-safe access across tabs and restarts
+        openIndexedDB().then((db) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          store.put(merged, STORAGE_KEY);
+        }).catch(() => {});
         return merged;
       }
     }
