@@ -58,10 +58,10 @@ export function getAlbums() {
 export async function getAlbumsAsync() {
   const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
-  // 1. Try Backend API first with fast 600ms timeout
+  // 1. Try Backend API first with 8000ms timeout
   try {
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 600);
+    const timeoutId = setTimeout(() => controller.abort(), 8000);
     const res = await fetch(`${apiBase}/content/albums`, { cache: 'no-cache', signal: controller.signal });
     clearTimeout(timeoutId);
     if (res.ok) {
@@ -71,6 +71,11 @@ export async function getAlbumsAsync() {
         try {
           localStorage.setItem(STORAGE_KEY, JSON.stringify(result.data));
         } catch (_) {}
+        openIndexedDB().then((db) => {
+          const tx = db.transaction(STORE_NAME, 'readwrite');
+          const store = tx.objectStore(STORE_NAME);
+          store.put(result.data, STORAGE_KEY);
+        }).catch(() => {});
         return result.data;
       }
     }

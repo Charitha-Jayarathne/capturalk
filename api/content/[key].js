@@ -9,20 +9,20 @@ async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) {
     return true;
   }
-  // Cooldown: If connection failed recently, return immediately to prevent hanging
-  if (Date.now() - lastFailureTime < 60000) {
+  // Short 3s cooldown to prevent flood on persistent failure
+  if (Date.now() - lastFailureTime < 3000) {
     return false;
   }
   try {
     const conn = await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 800,
+      serverSelectionTimeoutMS: 5000,
       bufferCommands: false,
     });
     isConnected = conn.connections[0].readyState === 1;
     return true;
   } catch (err) {
     lastFailureTime = Date.now();
-    console.warn('Fast fallback (DB connection delayed):', err.message);
+    console.warn('DB connection delayed:', err.message);
     return false;
   }
 }
@@ -41,6 +41,7 @@ export default async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*');
   res.setHeader('Access-Control-Allow-Methods', 'GET, POST, PUT, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
 
   if (req.method === 'OPTIONS') {
     return res.status(200).end();
