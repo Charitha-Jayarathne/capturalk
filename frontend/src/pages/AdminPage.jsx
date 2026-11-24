@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useMemo } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Lock, 
@@ -21,6 +21,7 @@ import {
   Clock,
   ChevronRight,
   ChevronDown,
+  Settings,
   SlidersHorizontal,
   Image as ImageIcon,
   Home,
@@ -90,6 +91,7 @@ import {
   addCategory,
   updateCategory,
   deleteCategory,
+  reorderCategories,
   resetCategories,
   DEFAULT_CATEGORIES
 } from '../utils/categoryService';
@@ -364,9 +366,45 @@ export default function AdminPage() {
     setTimeout(() => setSaveSuccessMsg(''), 4500);
   };
 
-  // Dynamic Categories Management State
-  const categoryItems = homeCms.categories?.items || DEFAULT_CATEGORY_ITEMS;
-  const [activeCatId, setActiveCatId] = useState(categoryItems[0]?.id || 'weddings');
+  // Dynamic Categories Management State (Derived directly from Site Settings Master Categories)
+  const categoryItems = useMemo(() => {
+    const rawItems = homeCms.categories?.items || DEFAULT_CATEGORY_ITEMS;
+    if (!categoriesList || categoriesList.length === 0) return rawItems;
+
+    return categoriesList.map((sysCat) => {
+      const sysNameLower = (sysCat.name || '').toLowerCase();
+      const existing = rawItems.find((it) => {
+        const itId = (it.id || '').toLowerCase();
+        const itTitle = (it.title || '').toLowerCase();
+        return (
+          itId === sysNameLower ||
+          itTitle === sysNameLower ||
+          (sysNameLower === 'events' && (itId === 'commercial' || itTitle.includes('events'))) ||
+          (sysNameLower.includes('360') && (itId === 'video360' || itTitle.includes('360')))
+        );
+      });
+
+      if (existing) {
+        return { ...existing, id: existing.id || sysCat.id, title: sysCat.name };
+      }
+
+      return {
+        id: sysCat.id || sysCat.slug,
+        title: sysCat.name,
+        subtitle: 'Fine Art Photography & Film',
+        mediaType: sysCat.name.toLowerCase().includes('video') || sysCat.name.toLowerCase().includes('cinematic') ? 'videos' : 'images',
+        isHidden: false,
+        slides: [
+          { id: 1, title: `${sysCat.name} Showcase`, location: 'Colombo, Sri Lanka', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85' }
+        ],
+        videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-posing-in-a-field-at-sunset-42998-large.mp4',
+        videoPoster: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
+        videoTitle: `${sysCat.name} Cinematic Experience`
+      };
+    });
+  }, [categoriesList, homeCms.categories?.items]);
+
+  const [activeCatId, setActiveCatId] = useState(() => categoryItems[0]?.id || 'cat-1');
   const [draggedCatIndex, setDraggedCatIndex] = useState(null);
   const [showAddCatModal, setShowAddCatModal] = useState(false);
   const [newCatForm, setNewCatForm] = useState({
@@ -377,11 +415,10 @@ export default function AdminPage() {
 
   // Ensure activeCatId points to a valid category
   useEffect(() => {
-    const items = homeCms.categories?.items || DEFAULT_CATEGORY_ITEMS;
-    if (!items.some(c => c.id === activeCatId) && items.length > 0) {
-      setActiveCatId(items[0].id);
+    if (!categoryItems.some(c => c.id === activeCatId) && categoryItems.length > 0) {
+      setActiveCatId(categoryItems[0].id);
     }
-  }, [homeCms.categories?.items, activeCatId]);
+  }, [categoryItems, activeCatId]);
 
   const saveAndPublishCategories = (newItems) => {
     const cleanItems = newItems.map((it, idx) => ({
@@ -676,6 +713,17 @@ export default function AdminPage() {
       setSaveSuccessMsg('✓ Categories reset to defaults.');
       setTimeout(() => setSaveSuccessMsg(''), 4000);
     }
+  };
+
+  const handleMoveSystemCategory = (fromIdx, toIdx) => {
+    if (toIdx < 0 || toIdx >= categoriesList.length) return;
+    const updated = [...categoriesList];
+    const [moved] = updated.splice(fromIdx, 1);
+    updated.splice(toIdx, 0, moved);
+    reorderCategories(updated);
+    setCategoriesList(updated);
+    setSaveSuccessMsg('✓ Categories sequence updated.');
+    setTimeout(() => setSaveSuccessMsg(''), 3000);
   };
 
   const handleOpenAddAlbumModal = (initialCoverUrl = null) => {
@@ -1324,9 +1372,12 @@ export default function AdminPage() {
                     className={`admin-nav-item ${activeSection === 'settings' ? 'active' : ''}`}
                   >
                     <div style={{ display: 'flex', alignItems: 'center', gap: '9px' }}>
-                      <SlidersHorizontal style={{ width: '14px', height: '14px', color: activeSection === 'settings' ? '#ff6a13' : '#777788' }} />
-                      <span>Studio Settings</span>
+                      <Settings style={{ width: '14px', height: '14px', color: activeSection === 'settings' ? '#ff6a13' : '#777788' }} />
+                      <span>Site Settings</span>
                     </div>
+                    <span className="admin-nav-badge" style={{ backgroundColor: 'rgba(255,106,19,0.18)', color: '#ff6a13', fontWeight: 700 }}>
+                      {categoriesList.length}
+                    </span>
                   </button>
                 </div>
               </div>
@@ -1383,7 +1434,7 @@ export default function AdminPage() {
               </span>
               <span style={{ color: '#444455' }}>/</span>
               <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600 }}>
-                {activeSection === 'manage-albums' ? 'Albums & Masterpieces Manager' : (pagesList.find(p => p.id === activeSection)?.name || 'Studio Overview')}
+                {activeSection === 'manage-albums' ? 'Albums & Masterpieces Manager' : activeSection === 'settings' ? 'Site Settings & Global Categories' : (pagesList.find(p => p.id === activeSection)?.name || 'Studio Overview')}
               </span>
             </div>
 
@@ -2009,10 +2060,10 @@ export default function AdminPage() {
                           )}
                         </div>
                         <h3 style={{ margin: '2px 0 0 0', fontSize: '18px', color: '#fff' }}>
-                          Dynamic Category Management & Showcase
+                          Category Showcase Panels & Media
                         </h3>
                         <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#888899' }}>
-                          Add, reorder, hide or delete categories. Choose media type (Images / Videos / Both) for each. Automatically updates Section 2 on the live website.
+                          Categories are managed globally under <strong style={{ color: '#ff6a13' }}>Site Settings</strong> in the sidebar. Below, customize slides, photos, and video for each active panel.
                         </p>
                       </div>
 
@@ -2052,25 +2103,26 @@ export default function AdminPage() {
 
                         <button
                           type="button"
-                          onClick={() => setShowAddCatModal(true)}
+                          onClick={() => setActiveSection('settings')}
                           style={{
                             display: 'inline-flex',
                             alignItems: 'center',
                             gap: '6px',
-                            padding: '9px 16px',
-                            backgroundColor: '#ff6a13',
-                            color: '#fff',
-                            border: 'none',
+                            padding: '8px 14px',
+                            backgroundColor: '#181824',
+                            color: '#ff6a13',
+                            border: '1px solid #ff6a13',
                             borderRadius: '6px',
                             fontSize: '12px',
-                            fontWeight: 700,
+                            fontWeight: 600,
                             cursor: 'pointer',
-                            boxShadow: '0 4px 14px rgba(255, 106, 19, 0.35)',
+                            boxShadow: '0 2px 10px rgba(0, 0, 0, 0.4)',
                             transition: 'all 0.2s ease'
                           }}
+                          title="Open Site Settings to add, rename, reorder or delete categories globally"
                         >
-                          <Plus style={{ width: '15px', height: '15px' }} />
-                          <span>Add New Category</span>
+                          <Settings style={{ width: '14px', height: '14px' }} />
+                          <span>Manage Categories in Site Settings →</span>
                         </button>
                       </div>
                     </div>
@@ -2320,7 +2372,7 @@ export default function AdminPage() {
                                 )}
                               </div>
 
-                              {/* Right: Actions (Hide/Show & Delete) */}
+                              {/* Right: Actions (Hide/Show) */}
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }} onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
@@ -2342,22 +2394,6 @@ export default function AdminPage() {
                                 >
                                   {cat.isHidden ? <EyeOff style={{ width: '13px', height: '13px' }} /> : <Eye style={{ width: '13px', height: '13px' }} />}
                                   <span>{cat.isHidden ? 'Hidden' : 'Visible'}</span>
-                                </button>
-
-                                <button
-                                  type="button"
-                                  onClick={() => handleDeleteCategory(cat.id, cat.title)}
-                                  style={{
-                                    padding: '6px',
-                                    backgroundColor: '#1b1214',
-                                    border: '1px solid #3d1b22',
-                                    borderRadius: '4px',
-                                    color: '#ff4444',
-                                    cursor: 'pointer'
-                                  }}
-                                  title="Delete Category"
-                                >
-                                  <Trash2 style={{ width: '13px', height: '13px' }} />
                                 </button>
                               </div>
                             </div>
@@ -2832,160 +2868,6 @@ export default function AdminPage() {
                         </div>
                       );
                     })()}
-
-                    {/* Modal: Add New Category Dialog */}
-                    {showAddCatModal && (
-                      <div 
-                        style={{
-                          position: 'fixed',
-                          inset: 0,
-                          backgroundColor: 'rgba(0, 0, 0, 0.85)',
-                          backdropFilter: 'blur(8px)',
-                          zIndex: 9999,
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          padding: '16px'
-                        }}
-                      >
-                        <div 
-                          style={{
-                            width: '100%',
-                            maxWidth: '520px',
-                            backgroundColor: '#0d0d14',
-                            border: '1px solid #2e2e42',
-                            borderRadius: '10px',
-                            padding: '24px',
-                            boxShadow: '0 20px 60px rgba(0,0,0,0.9)'
-                          }}
-                        >
-                          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              <Plus style={{ width: '18px', height: '18px', color: '#ff6a13' }} />
-                              <h3 style={{ margin: 0, fontSize: '16px', color: '#fff', fontWeight: 700 }}>
-                                Create New Category
-                              </h3>
-                            </div>
-                            <button
-                              type="button"
-                              onClick={() => setShowAddCatModal(false)}
-                              style={{ background: 'transparent', border: 'none', color: '#888', cursor: 'pointer', padding: '4px' }}
-                            >
-                              <X style={{ width: '18px', height: '18px' }} />
-                            </button>
-                          </div>
-
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginBottom: '22px' }}>
-                            <div>
-                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ddd', marginBottom: '6px' }}>
-                                Category Name / Title *
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. Fine Art Portraits, Drone Cinematography, Maternity"
-                                value={newCatForm.title}
-                                onChange={(e) => setNewCatForm({ ...newCatForm, title: e.target.value })}
-                                className="admin-input"
-                                style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
-                                autoFocus
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ddd', marginBottom: '6px' }}>
-                                Subtitle / Venue Tagline
-                              </label>
-                              <input
-                                type="text"
-                                placeholder="e.g. Studio & Natural Light Heirloom Portraits"
-                                value={newCatForm.subtitle}
-                                onChange={(e) => setNewCatForm({ ...newCatForm, subtitle: e.target.value })}
-                                className="admin-input"
-                                style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', fontSize: '13px', boxSizing: 'border-box' }}
-                              />
-                            </div>
-
-                            <div>
-                              <label style={{ display: 'block', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', color: '#ff6a13', marginBottom: '6px' }}>
-                                Media Format Type
-                              </label>
-                              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
-                                {[
-                                  { type: 'images', label: 'Images', icon: Camera },
-                                  { type: 'videos', label: 'Videos', icon: Video },
-                                  { type: 'both', label: 'Both', icon: Layers }
-                                ].map((m) => {
-                                  const isSel = newCatForm.mediaType === m.type;
-                                  const MIcon = m.icon;
-                                  return (
-                                    <button
-                                      key={m.type}
-                                      type="button"
-                                      onClick={() => setNewCatForm({ ...newCatForm, mediaType: m.type })}
-                                      style={{
-                                        display: 'flex',
-                                        flexDirection: 'column',
-                                        alignItems: 'center',
-                                        gap: '6px',
-                                        padding: '12px 8px',
-                                        borderRadius: '6px',
-                                        backgroundColor: isSel ? 'rgba(255, 106, 19, 0.15)' : '#14141e',
-                                        border: isSel ? '1.5px solid #ff6a13' : '1px solid #232334',
-                                        color: isSel ? '#ff6a13' : '#aaa',
-                                        cursor: 'pointer'
-                                      }}
-                                    >
-                                      <MIcon style={{ width: '16px', height: '16px' }} />
-                                      <span style={{ fontSize: '11px', fontWeight: 600 }}>{m.label}</span>
-                                    </button>
-                                  );
-                                })}
-                              </div>
-                            </div>
-                          </div>
-
-                          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px' }}>
-                            <button
-                              type="button"
-                              onClick={() => setShowAddCatModal(false)}
-                              style={{
-                                padding: '9px 16px',
-                                backgroundColor: '#1a1a26',
-                                border: '1px solid #333346',
-                                color: '#ccc',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: 600,
-                                cursor: 'pointer'
-                              }}
-                            >
-                              Cancel
-                            </button>
-                            <button
-                              type="button"
-                              onClick={handleAddCategory}
-                              style={{
-                                display: 'inline-flex',
-                                alignItems: 'center',
-                                gap: '6px',
-                                padding: '9px 20px',
-                                backgroundColor: '#ff6a13',
-                                border: 'none',
-                                color: '#fff',
-                                borderRadius: '6px',
-                                fontSize: '12px',
-                                fontWeight: 700,
-                                cursor: 'pointer',
-                                boxShadow: '0 4px 14px rgba(255, 106, 19, 0.4)'
-                              }}
-                            >
-                              <Plus style={{ width: '14px', height: '14px' }} />
-                              <span>Create Category</span>
-                            </button>
-                          </div>
-                        </div>
-                      </div>
-                    )}
                   </div>
 
                   {/* --------------------------------------------------------- */}
@@ -5441,176 +5323,6 @@ export default function AdminPage() {
                   </label>
                 </div>
 
-                {/* ========================================================= */}
-                {/* SYSTEM CATEGORIES MANAGER (ADD / EDIT / DELETE CATEGORIES) */}
-                {/* ========================================================= */}
-                <div style={{
-                  padding: '20px 22px',
-                  backgroundColor: '#0c0c14',
-                  border: '1px solid #242436',
-                  borderRadius: '8px',
-                  marginBottom: '20px',
-                  boxShadow: '0 4px 20px rgba(0, 0, 0, 0.4)'
-                }}>
-                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '14px', flexWrap: 'wrap', gap: '12px' }}>
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <Tag style={{ width: '15px', height: '15px', color: '#ff6a13' }} />
-                        <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.12em', color: '#ff6a13', fontWeight: 700 }}>
-                          System Categories ({categoriesList.length} Active)
-                        </span>
-                      </div>
-                      <p style={{ margin: '3px 0 0 0', fontSize: '11px', color: '#888899' }}>
-                        Add your own categories or delete unwanted ones (e.g. Weddings). Only active categories appear across website selectors & filters.
-                      </p>
-                    </div>
-
-                    {/* Add Category Form */}
-                    <form
-                      onSubmit={(e) => {
-                        e.preventDefault();
-                        handleAddNewCategory();
-                      }}
-                      style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
-                    >
-                      <input
-                        type="text"
-                        value={newCategoryInput}
-                        onChange={(e) => setNewCategoryInput(e.target.value)}
-                        placeholder="New category name (e.g. Wildlife, Fashion)..."
-                        className="admin-input"
-                        style={{ padding: '8px 12px', borderRadius: '4px', fontSize: '12px', width: '250px' }}
-                      />
-                      <button
-                        type="submit"
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          padding: '8px 16px',
-                          backgroundColor: '#ff6a13',
-                          border: 'none',
-                          color: '#fff',
-                          borderRadius: '4px',
-                          fontSize: '12px',
-                          fontWeight: 700,
-                          cursor: 'pointer',
-                          boxShadow: '0 2px 10px rgba(255,106,19,0.35)'
-                        }}
-                      >
-                        <Plus style={{ width: '14px', height: '14px' }} />
-                        <span>Add Category</span>
-                      </button>
-                    </form>
-                  </div>
-
-                  {/* Category Chips List */}
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap', paddingTop: '10px', borderTop: '1px solid #1a1a28' }}>
-                    {categoriesList.map((cat) => {
-                      const albumCount = albumsList.filter(a => (a.category || '').toLowerCase() === cat.name.toLowerCase()).length;
-                      const isEditing = editingCategoryId === cat.id;
-
-                      return (
-                        <div
-                          key={cat.id}
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '8px',
-                            padding: '6px 12px',
-                            borderRadius: '5px',
-                            backgroundColor: '#13131d',
-                            border: '1px solid #2a2a3e',
-                            fontSize: '12px'
-                          }}
-                        >
-                          {isEditing ? (
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                              <input
-                                type="text"
-                                autoFocus
-                                value={editingCategoryName}
-                                onChange={(e) => setEditingCategoryName(e.target.value)}
-                                onKeyDown={(e) => {
-                                  if (e.key === 'Enter') handleUpdateCategoryName(cat.id);
-                                  if (e.key === 'Escape') setEditingCategoryId(null);
-                                }}
-                                className="admin-input"
-                                style={{ padding: '3px 8px', fontSize: '11px', width: '130px' }}
-                              />
-                              <button
-                                type="button"
-                                onClick={() => handleUpdateCategoryName(cat.id)}
-                                style={{ background: 'none', border: 'none', color: '#22c55e', cursor: 'pointer', padding: '2px' }}
-                                title="Save name"
-                              >
-                                <Check style={{ width: '14px', height: '14px' }} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => setEditingCategoryId(null)}
-                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '2px' }}
-                                title="Cancel"
-                              >
-                                <X style={{ width: '14px', height: '14px' }} />
-                              </button>
-                            </div>
-                          ) : (
-                            <>
-                              <span style={{ color: '#fff', fontWeight: 600 }}>{cat.name}</span>
-                              <span style={{ fontSize: '10px', padding: '1px 6px', borderRadius: '3px', backgroundColor: '#1c1c2b', color: '#ffaa66', fontWeight: 600 }}>
-                                {albumCount}
-                              </span>
-                              <button
-                                type="button"
-                                onClick={() => {
-                                  setEditingCategoryId(cat.id);
-                                  setEditingCategoryName(cat.name);
-                                }}
-                                style={{ background: 'none', border: 'none', color: '#888', cursor: 'pointer', padding: '1px' }}
-                                title="Rename category"
-                              >
-                                <Edit style={{ width: '12px', height: '12px' }} />
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => handleDeleteCategoryPrompt(cat.id, cat.name)}
-                                style={{ background: 'none', border: 'none', color: '#ff6677', cursor: 'pointer', padding: '1px' }}
-                                title="Delete category from entire system"
-                              >
-                                <Trash2 style={{ width: '12px', height: '12px' }} />
-                              </button>
-                            </>
-                          )}
-                        </div>
-                      );
-                    })}
-
-                    {categoriesList.length === 0 && (
-                      <span style={{ fontSize: '12px', color: '#ff6677' }}>
-                        No categories in system. Please add at least one category above.
-                      </span>
-                    )}
-
-                    <button
-                      type="button"
-                      onClick={handleResetCategoriesToDefault}
-                      style={{
-                        background: 'none',
-                        border: 'none',
-                        color: '#666',
-                        fontSize: '11px',
-                        cursor: 'pointer',
-                        marginLeft: 'auto',
-                        textDecoration: 'underline'
-                      }}
-                      title="Reset categories to default initial set"
-                    >
-                      Reset Categories to Defaults
-                    </button>
-                  </div>
-                </div>
-
                 {/* Search & Category Filter Bar */}
                 <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', flexWrap: 'wrap', marginBottom: '18px', padding: '14px 18px', backgroundColor: '#0f0f17', border: '1px solid #1c1c28', borderRadius: '6px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flex: 1, minWidth: '240px' }}>
@@ -6043,18 +5755,303 @@ export default function AdminPage() {
               </div>
             )}
 
-            {/* SETTINGS */}
+            {/* SITE SETTINGS (GLOBAL MASTER CATEGORIES & STUDIO PREFERENCES) */}
             {activeSection === 'settings' && (
-              <div className="admin-card" style={{ padding: '24px', maxWidth: '640px' }}>
-                <h2 style={{ margin: '0 0 6px 0', fontSize: '20px', color: '#fff' }}>Studio Operational Preferences</h2>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888899', textTransform: 'uppercase', marginBottom: '6px', fontFamily: 'monospace' }}>Notification Email</label>
-                    <input type="email" defaultValue="bookings@capturalk.com" className="admin-input" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }} />
+              <div style={{ maxWidth: '1000px', display: 'flex', flexDirection: 'column', gap: '24px' }}>
+                {/* Header Card */}
+                <div style={{
+                  padding: '24px',
+                  backgroundColor: '#0c0c14',
+                  border: '1px solid #1f1f2e',
+                  borderRadius: '8px',
+                  position: 'relative',
+                  overflow: 'hidden'
+                }}>
+                  <div style={{
+                    position: 'absolute',
+                    top: '-40px',
+                    right: '-40px',
+                    width: '180px',
+                    height: '180px',
+                    backgroundColor: 'rgba(255, 106, 19, 0.04)',
+                    borderRadius: '50%',
+                    filter: 'blur(50px)',
+                    pointerEvents: 'none'
+                  }} />
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '8px' }}>
+                    <Settings style={{ width: '20px', height: '20px', color: '#ff6a13' }} />
+                    <h2 style={{ margin: 0, fontSize: '22px', fontWeight: 600, color: '#fff', letterSpacing: '-0.01em' }}>
+                      Site Settings & Global Categories
+                    </h2>
                   </div>
-                  <div>
-                    <label style={{ display: 'block', fontSize: '11px', color: '#888899', textTransform: 'uppercase', marginBottom: '6px', fontFamily: 'monospace' }}>Master Studio Password</label>
-                    <input type="password" defaultValue="admin123" className="admin-input" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box', fontFamily: 'monospace' }} />
+                  <p style={{ margin: 0, fontSize: '13px', color: '#888899', lineHeight: 1.5, maxWidth: '780px' }}>
+                    This is the central control hub for managing categories across the entire Captura studio ecosystem. 
+                    Categories added, renamed, reordered, or deleted here instantly synchronize with the Home Page Category Showcase, 
+                    Masterpiece Gallery filters, Album Managers, and client booking forms.
+                  </p>
+                </div>
+
+                {/* Master Category Manager Card */}
+                <div className="admin-card" style={{ padding: '24px', backgroundColor: '#0c0c14', border: '1px solid #1f1f2e', borderRadius: '8px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '20px', flexWrap: 'wrap', gap: '12px' }}>
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <Tag style={{ width: '16px', height: '16px', color: '#ff6a13' }} />
+                        <span style={{ fontSize: '13px', textTransform: 'uppercase', letterSpacing: '0.1em', color: '#ff6a13', fontWeight: 700 }}>
+                          Global Master Categories ({categoriesList.length} Active)
+                        </span>
+                        <span style={{ fontSize: '10px', padding: '2px 8px', borderRadius: '12px', backgroundColor: 'rgba(34, 197, 94, 0.15)', color: '#4ade80', border: '1px solid rgba(34, 197, 94, 0.3)', fontWeight: 600 }}>
+                          ● Live Reactive Sync
+                        </span>
+                      </div>
+                      <p style={{ margin: '4px 0 0 0', fontSize: '12px', color: '#888899' }}>
+                        Only categories in this master list will exist on the website. Use the arrows to set the display sequence.
+                      </p>
+                    </div>
+
+                    {/* Add Category Form */}
+                    <form
+                      onSubmit={(e) => {
+                        e.preventDefault();
+                        handleAddNewCategory();
+                      }}
+                      style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}
+                    >
+                      <input
+                        type="text"
+                        value={newCategoryInput}
+                        onChange={(e) => setNewCategoryInput(e.target.value)}
+                        placeholder="New category name (e.g. Wildlife, Fashion)..."
+                        className="admin-input"
+                        style={{ padding: '9px 14px', borderRadius: '6px', fontSize: '13px', width: '280px' }}
+                      />
+                      <button
+                        type="submit"
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '9px 18px',
+                          backgroundColor: '#ff6a13',
+                          border: 'none',
+                          color: '#fff',
+                          borderRadius: '6px',
+                          fontSize: '13px',
+                          fontWeight: 700,
+                          cursor: 'pointer',
+                          boxShadow: '0 2px 10px rgba(255,106,19,0.35)'
+                        }}
+                      >
+                        <Plus style={{ width: '15px', height: '15px' }} />
+                        <span>Add Category</span>
+                      </button>
+                    </form>
+                  </div>
+
+                  {/* Categories Sequence List */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginBottom: '20px' }}>
+                    {categoriesList.map((cat, idx) => {
+                      const albumCount = albumsList.filter(a => (a.category || '').toLowerCase() === cat.name.toLowerCase()).length;
+                      const isEditing = editingCategoryId === cat.id;
+
+                      return (
+                        <div
+                          key={cat.id || idx}
+                          style={{
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'space-between',
+                            gap: '14px',
+                            padding: '12px 16px',
+                            backgroundColor: '#11111a',
+                            border: '1px solid #1f1f2e',
+                            borderRadius: '6px',
+                            flexWrap: 'wrap'
+                          }}
+                        >
+                          {/* Left: Sequence Arrows & Number & Name */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, minWidth: '240px' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                              <button
+                                type="button"
+                                disabled={idx === 0}
+                                onClick={() => handleMoveSystemCategory(idx, idx - 1)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: idx === 0 ? '#333344' : '#888899',
+                                  cursor: idx === 0 ? 'default' : 'pointer',
+                                  padding: '1px',
+                                  lineHeight: 1
+                                }}
+                                title="Move Up in sequence"
+                              >
+                                <ChevronUp style={{ width: '14px', height: '14px' }} />
+                              </button>
+                              <button
+                                type="button"
+                                disabled={idx === categoriesList.length - 1}
+                                onClick={() => handleMoveSystemCategory(idx, idx + 1)}
+                                style={{
+                                  background: 'none',
+                                  border: 'none',
+                                  color: idx === categoriesList.length - 1 ? '#333344' : '#888899',
+                                  cursor: idx === categoriesList.length - 1 ? 'default' : 'pointer',
+                                  padding: '1px',
+                                  lineHeight: 1
+                                }}
+                                title="Move Down in sequence"
+                              >
+                                <ChevronDown style={{ width: '14px', height: '14px' }} />
+                              </button>
+                            </div>
+
+                            <span style={{ fontSize: '12px', fontFamily: 'monospace', fontWeight: 700, color: '#ff6a13', minWidth: '24px' }}>
+                              {String(idx + 1).padStart(2, '0')}.
+                            </span>
+
+                            {isEditing ? (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flex: 1 }}>
+                                <input
+                                  type="text"
+                                  autoFocus
+                                  value={editingCategoryName}
+                                  onChange={(e) => setEditingCategoryName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === 'Enter') handleUpdateCategoryName(cat.id);
+                                    if (e.key === 'Escape') setEditingCategoryId(null);
+                                  }}
+                                  className="admin-input"
+                                  style={{ padding: '6px 10px', fontSize: '13px', width: '200px' }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={() => handleUpdateCategoryName(cat.id)}
+                                  style={{ background: '#142017', border: '1px solid #23522c', color: '#4ade80', borderRadius: '4px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                                >
+                                  <Check style={{ width: '13px', height: '13px' }} />
+                                  <span>Save</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => setEditingCategoryId(null)}
+                                  style={{ background: '#1e1e2d', border: '1px solid #33334a', color: '#aaa', borderRadius: '4px', padding: '6px 10px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '4px', fontSize: '12px' }}
+                                >
+                                  <X style={{ width: '13px', height: '13px' }} />
+                                  <span>Cancel</span>
+                                </button>
+                              </div>
+                            ) : (
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                                <span style={{ fontSize: '14px', fontWeight: 600, color: '#fff' }}>
+                                  {cat.name}
+                                </span>
+                                <span style={{ fontSize: '10px', fontFamily: 'monospace', color: '#777788', padding: '2px 6px', borderRadius: '3px', backgroundColor: '#09090f' }}>
+                                  slug: {cat.slug || cat.id}
+                                </span>
+                              </div>
+                            )}
+                          </div>
+
+                          {/* Right: Stats & Actions */}
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <span style={{ fontSize: '11px', padding: '3px 8px', borderRadius: '4px', backgroundColor: '#181824', color: albumCount > 0 ? '#ffaa66' : '#666677', border: '1px solid #242436', fontWeight: 600 }}>
+                              {albumCount} {albumCount === 1 ? 'Album' : 'Albums'} Assigned
+                            </span>
+
+                            {!isEditing && (
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setEditingCategoryId(cat.id);
+                                  setEditingCategoryName(cat.name);
+                                }}
+                                style={{
+                                  display: 'inline-flex',
+                                  alignItems: 'center',
+                                  gap: '4px',
+                                  padding: '5px 10px',
+                                  backgroundColor: '#181824',
+                                  border: '1px solid #28283c',
+                                  color: '#ddd',
+                                  borderRadius: '4px',
+                                  fontSize: '12px',
+                                  cursor: 'pointer'
+                                }}
+                                title="Rename category"
+                              >
+                                <Edit style={{ width: '12px', height: '12px' }} />
+                                <span>Rename</span>
+                              </button>
+                            )}
+
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteCategoryPrompt(cat.id, cat.name)}
+                              style={{
+                                display: 'inline-flex',
+                                alignItems: 'center',
+                                gap: '4px',
+                                padding: '5px 10px',
+                                backgroundColor: '#1c1014',
+                                border: '1px solid #4a1520',
+                                color: '#ff6677',
+                                borderRadius: '4px',
+                                fontSize: '12px',
+                                cursor: 'pointer'
+                              }}
+                              title="Delete category from entire system"
+                            >
+                              <Trash2 style={{ width: '12px', height: '12px' }} />
+                              <span>Delete</span>
+                            </button>
+                          </div>
+                        </div>
+                      );
+                    })}
+
+                    {categoriesList.length === 0 && (
+                      <div style={{ padding: '24px', textAlign: 'center', color: '#ff6677', backgroundColor: '#150d10', borderRadius: '6px', border: '1px dashed #4a1520' }}>
+                        No categories currently in system. Add a category above to activate filters and Home page showcase.
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bottom Reset Action */}
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', paddingTop: '12px', borderTop: '1px solid #1a1a28' }}>
+                    <button
+                      type="button"
+                      onClick={handleResetCategoriesToDefault}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        color: '#666677',
+                        fontSize: '11px',
+                        cursor: 'pointer',
+                        textDecoration: 'underline'
+                      }}
+                      title="Reset categories to default initial set"
+                    >
+                      Reset Categories to Factory Defaults
+                    </button>
+                  </div>
+                </div>
+
+                {/* Studio Operational Preferences Card */}
+                <div className="admin-card" style={{ padding: '24px', backgroundColor: '#0c0c14', border: '1px solid #1f1f2e', borderRadius: '8px' }}>
+                  <h3 style={{ margin: '0 0 14px 0', fontSize: '16px', color: '#fff', fontWeight: 600 }}>
+                    Studio Operational Preferences
+                  </h3>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: '#888899', textTransform: 'uppercase', marginBottom: '6px', fontFamily: 'monospace' }}>Notification Email</label>
+                      <input type="email" defaultValue="bookings@capturalk.com" className="admin-input" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box' }} />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '11px', color: '#888899', textTransform: 'uppercase', marginBottom: '6px', fontFamily: 'monospace' }}>Master Studio Password</label>
+                      <input type="password" defaultValue="admin123" className="admin-input" style={{ width: '100%', padding: '10px 14px', borderRadius: '4px', fontSize: '13px', boxSizing: 'border-box', fontFamily: 'monospace' }} />
+                    </div>
                   </div>
                 </div>
               </div>
@@ -6286,25 +6283,21 @@ export default function AdminPage() {
                       <button
                         type="button"
                         onClick={() => {
-                          const name = prompt('Enter new category name to add to system:');
-                          if (name && name.trim()) {
-                            const created = handleAddNewCategory(name.trim());
-                            if (created) {
-                              setAlbumForm(prev => ({ ...prev, category: created.name }));
-                            }
-                          }
+                          setShowAddAlbumModal(false);
+                          setActiveSection('settings');
                         }}
                         style={{
                           background: 'none',
                           border: 'none',
                           color: '#ff6a13',
                           fontSize: '11px',
-                          fontWeight: 700,
+                          fontWeight: 600,
                           cursor: 'pointer',
                           padding: 0
                         }}
+                        title="Manage Master Categories in Site Settings"
                       >
-                        + Add New Category
+                        Manage in Site Settings →
                       </button>
                     </div>
                     <select

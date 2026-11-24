@@ -209,6 +209,17 @@ export function deleteCategory(id) {
 }
 
 /**
+ * Reorder categories and persist
+ */
+export function reorderCategories(newCategories) {
+  if (Array.isArray(newCategories)) {
+    saveCategories(newCategories);
+    return newCategories;
+  }
+  return getCategories();
+}
+
+/**
  * Reset categories to default initial set
  */
 export function resetCategories() {
