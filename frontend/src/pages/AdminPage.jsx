@@ -859,16 +859,43 @@ export default function AdminPage() {
       });
       setSaveSuccessMsg(`✓ Photo uploaded successfully (${uploaded.size}). High-definition & web-optimized!`);
       setTimeout(() => setSaveSuccessMsg(''), 4500);
+
+      // Automatically launch the framing & adjustment editor
+      openHeroEditor(uploaded.url, `Adjust Album Cover: ${file.name}`, (framedUrl) => {
+        setAlbumForm(prev => {
+          const updatedPhotos = prev.photos && prev.photos.length > 0
+            ? [framedUrl, ...prev.photos.slice(1)]
+            : [framedUrl];
+          return {
+            ...prev,
+            coverImage: framedUrl,
+            photos: updatedPhotos,
+            photoCount: updatedPhotos.length
+          };
+        });
+      });
     } catch (err) {
       console.warn('Universal image processing fallback', err);
       const reader = new FileReader();
       reader.onload = () => {
-        setAlbumForm(prev => ({ ...prev, coverImage: reader.result }));
+        const dataUrl = reader.result;
+        setAlbumForm(prev => ({ ...prev, coverImage: dataUrl }));
+        openHeroEditor(dataUrl, `Adjust Album Cover: ${file.name}`, (framedUrl) => {
+          setAlbumForm(prev => ({ ...prev, coverImage: framedUrl }));
+        });
       };
       reader.readAsDataURL(file);
     } finally {
       setIsProcessingAlbumImage(false);
     }
+  };
+
+  const handleUpdateAlbumCoverDirect = (albumId, newCoverUrl) => {
+    updateAlbum(albumId, { coverImage: newCoverUrl });
+    const fresh = getAlbums();
+    setAlbumsList(fresh);
+    setSaveSuccessMsg('✓ Album cover photo framing updated successfully.');
+    setTimeout(() => setSaveSuccessMsg(''), 4000);
   };
 
   // Multiple Photos Upload Handler: batch processes multiple files in any format
@@ -5583,6 +5610,29 @@ export default function AdminPage() {
                               <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                                 <button
                                   type="button"
+                                  onClick={() => openHeroEditor(album.coverImage, `Adjust Album Cover: ${album.title}`, (framedUrl) => {
+                                    handleUpdateAlbumCoverDirect(album.id, framedUrl);
+                                  })}
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '4px',
+                                    padding: '5px 8px',
+                                    backgroundColor: '#181826',
+                                    border: '1px solid #333346',
+                                    color: '#ffaa66',
+                                    borderRadius: '4px',
+                                    fontSize: '11px',
+                                    cursor: 'pointer'
+                                  }}
+                                  title="Adjust & Frame Cover Photo"
+                                >
+                                  <Crop style={{ width: '12px', height: '12px' }} />
+                                  <span>Frame</span>
+                                </button>
+
+                                <button
+                                  type="button"
                                   onClick={() => handleOpenEditAlbumModal(album)}
                                   style={{
                                     display: 'inline-flex',
@@ -6288,16 +6338,52 @@ export default function AdminPage() {
                   )}
 
                   {albumForm.coverImage && (
-                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', gap: '14px', padding: '10px', backgroundColor: '#13131d', borderRadius: '6px', border: '1px solid #202030' }}>
-                      <img
-                        src={albumForm.coverImage}
-                        alt="Cover Preview"
-                        style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
-                      />
-                      <div>
-                        <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600, display: 'block' }}>Active Cover Photo</span>
-                        <span style={{ fontSize: '10px', color: '#22c55e' }}>✓ Ready for live showcase & gallery</span>
+                    <div style={{ marginTop: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '14px', padding: '10px 14px', backgroundColor: '#13131d', borderRadius: '6px', border: '1px solid #202030' }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <img
+                          src={albumForm.coverImage}
+                          alt="Cover Preview"
+                          style={{ width: '90px', height: '60px', objectFit: 'cover', borderRadius: '4px', border: '1px solid #ff6a13' }}
+                        />
+                        <div>
+                          <span style={{ fontSize: '12px', color: '#fff', fontWeight: 600, display: 'block' }}>Active Cover Photo</span>
+                          <span style={{ fontSize: '10px', color: '#22c55e' }}>✓ Ready for live showcase & gallery</span>
+                        </div>
                       </div>
+
+                      <button
+                        type="button"
+                        onClick={() => openHeroEditor(albumForm.coverImage, `Adjust Album Cover: ${albumForm.title || 'New Album'}`, (framedUrl) => {
+                          setAlbumForm(prev => {
+                            const updatedPhotos = prev.photos && prev.photos.length > 0
+                              ? [framedUrl, ...prev.photos.slice(1)]
+                              : [framedUrl];
+                            return {
+                              ...prev,
+                              coverImage: framedUrl,
+                              photos: updatedPhotos,
+                              photoCount: updatedPhotos.length
+                            };
+                          });
+                        })}
+                        style={{
+                          display: 'inline-flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          padding: '7px 14px',
+                          backgroundColor: '#1b1b28',
+                          border: '1px solid #ff6a13',
+                          color: '#ff9944',
+                          borderRadius: '5px',
+                          fontSize: '12px',
+                          fontWeight: 600,
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <Crop style={{ width: '13px', height: '13px' }} />
+                        <span>Adjust & Frame Photo</span>
+                      </button>
                     </div>
                   )}
                 </div>
