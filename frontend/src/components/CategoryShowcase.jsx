@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, Volume2, VolumeX, ArrowRight, Camera, Video, Film } from 'lucide-react';
-import { Link } from 'react-router-dom';
+import { Play, Pause, Volume2, VolumeX, Camera, Video, Film } from 'lucide-react';
 import RevealOnScroll from './RevealOnScroll';
 import { getHomeContent, getHomeContentAsync, DEFAULT_CATEGORY_ITEMS } from '../utils/homeContentService';
 import { getCategories, getCategoriesAsync } from '../utils/categoryService';
@@ -212,7 +211,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                     : 'bg-black/60 text-neutral-400 border-white/10'
                 }`}
               >
-                {String(idx + 1).padStart(2, '0')} {cat.title}
+                {cat.title}
               </button>
             ))}
           </div>
@@ -269,7 +268,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                         pointerEvents: 'none'
                       }} 
                     />
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px 64px 12px', pointerEvents: 'none' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px', pointerEvents: 'none' }}>
                       <img 
                         src={photo.url} 
                         alt={photo.title || cat.title} 
@@ -307,7 +306,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                         }} 
                       />
                     )}
-                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px 64px 12px' }}>
+                    <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '16px 12px' }}>
                       <video
                         key={cat.videoUrl}
                         autoPlay
@@ -344,8 +343,8 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                 {/* Mobile Top Bar */}
                 <div style={{ position: 'relative', zIndex: 10, padding: '12px 14px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: '8px' }}>
                   <div className="flex items-center gap-2">
-                    <span className="text-[10px] tracking-[0.2em] uppercase font-bold text-white bg-black/80 px-2.5 py-1 border border-white/10 rounded">
-                      {String(activePanel + 1).padStart(2, '0')} / {cat.title}
+                    <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-white bg-black/80 px-2.5 py-1 border border-white/10 rounded">
+                      {cat.title}
                     </span>
 
                     {/* Both Media Switcher Pill on Mobile */}
@@ -412,25 +411,6 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                       </button>
                     </div>
                   )}
-                </div>
-
-                {/* Mobile Bottom Info Bar */}
-                <div style={{ position: 'relative', zIndex: 10, padding: '14px', backdropFilter: 'blur(4px)' }}>
-                  <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-300 font-medium">
-                    {!isVideoMode ? (currentSlide?.location || cat.subtitle) : (cat.videoTitle || cat.subtitle || 'Cinematic Film Experience')}
-                  </p>
-                  <div className="flex items-center justify-between gap-2 mt-0.5">
-                    <h3 className="font-serif-luxury text-base sm:text-lg text-white font-medium">
-                      {!isVideoMode ? (currentSlide?.title || cat.title) : (cat.videoTitle || `${cat.title} Cinematic Reel`)}
-                    </h3>
-                    <Link
-                      to="/contact"
-                      className="inline-flex items-center gap-1 text-[#ff6a13] hover:text-white font-semibold uppercase tracking-wider text-[11px] transition-colors shrink-0"
-                    >
-                      <span>Contact</span>
-                      <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                  </div>
                 </div>
               </div>
             );
@@ -517,7 +497,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '16px 16px 64px 16px',
+                                padding: '16px',
                                 pointerEvents: 'none'
                               }}
                             >
@@ -572,7 +552,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                padding: '16px 16px 64px 16px'
+                                padding: '16px'
                               }}
                             >
                               <video
@@ -620,7 +600,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                       <div className="relative z-10 p-3 sm:p-3.5 flex items-center justify-between flex-wrap gap-2">
                         <div className="flex items-center gap-2">
                           <span className="text-[10px] tracking-[0.22em] uppercase font-bold text-white bg-black/75 backdrop-blur-md px-2.5 py-1 border border-white/10 whitespace-nowrap">
-                            {String(idx + 1).padStart(2, '0')} / {cat.title}
+                            {cat.title}
                           </span>
 
                           {/* Mode switcher for 'both' media type */}
@@ -695,30 +675,6 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                             </button>
                           </div>
                         )}
-                      </div>
-
-                      {/* Bottom Info Content */}
-                      <div className="relative z-10 p-3.5 sm:p-4 space-y-1">
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-neutral-300 font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                          {!isVideoMode ? (currentSlide?.location || cat.subtitle) : (cat.videoTitle || cat.subtitle || 'Cinematic Film Experience')}
-                        </p>
-                        <div className="flex items-center justify-between gap-2">
-                          <h3 className="font-serif-luxury text-lg sm:text-xl lg:text-2xl text-white font-medium whitespace-nowrap overflow-hidden text-ellipsis">
-                            {isCurrentActive 
-                              ? (!isVideoMode ? (currentSlide?.title || cat.title) : (cat.videoTitle || `${cat.title} Cinematic Reel`))
-                              : cat.title
-                            }
-                          </h3>
-                          {isCurrentActive && (
-                            <Link
-                              to="/contact"
-                              className="inline-flex items-center gap-1 text-[#ff6a13] hover:text-white font-semibold uppercase tracking-wider text-[11px] transition-colors cursor-pointer shrink-0"
-                            >
-                              <span>Contact Us</span>
-                              <ArrowRight className="w-3.5 h-3.5" />
-                            </Link>
-                          )}
-                        </div>
                       </div>
                     </div>
                   );
