@@ -114,6 +114,12 @@ export default function AdminPage() {
   const [homeCms, setHomeCms] = useState(getHomeContent());
   const [activeCatPillar, setActiveCatPillar] = useState('wedding'); // 'wedding' | 'graduation' | 'preshoot' | 'commercial' | 'video360'
 
+  // Global Master Categories State (Synchronized across the entire studio ecosystem)
+  const [categoriesList, setCategoriesList] = useState(() => getCategories());
+  const [newCategoryInput, setNewCategoryInput] = useState('');
+  const [editingCategoryId, setEditingCategoryId] = useState(null);
+  const [editingCategoryName, setEditingCategoryName] = useState('');
+
   // Hero Image Framing & Preview Editor Modal State
   const [heroEditorOpen, setHeroEditorOpen] = useState(false);
   const [heroEditorImage, setHeroEditorImage] = useState('');
@@ -563,12 +569,6 @@ export default function AdminPage() {
     const updated = slides.filter((_, idx) => idx !== slideIdx);
     handleUpdateActiveCat({ slides: updated });
   };
-
-  // Dynamic Categories State
-  const [categoriesList, setCategoriesList] = useState(getCategories());
-  const [newCategoryInput, setNewCategoryInput] = useState('');
-  const [editingCategoryId, setEditingCategoryId] = useState(null);
-  const [editingCategoryName, setEditingCategoryName] = useState('');
 
   // Albums CMS State (12 Albums 3x4 grid on Home Page, all albums in Masterpiece Gallery)
   const [albumsList, setAlbumsList] = useState(getAlbums());
