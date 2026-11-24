@@ -1,15 +1,14 @@
 // Fine-Art Studio Dynamic Categories Service (IndexedDB + LocalStorage with Reactive Sync)
 
 export const DEFAULT_CATEGORIES = [
-  { id: 'cat-weddings', name: 'Weddings', slug: 'weddings' },
-  { id: 'cat-preshoot', name: 'Pre-Shoot', slug: 'pre-shoot' },
-  { id: 'cat-graduations', name: 'Graduations', slug: 'graduations' },
   { id: 'cat-events', name: 'Events', slug: 'events' },
-  { id: 'cat-commercial', name: 'Commercial', slug: 'commercial' },
-  { id: 'cat-portraits', name: 'Portraits', slug: 'portraits' }
+  { id: 'cat-concerts', name: 'Concerts', slug: 'concerts' },
+  { id: 'cat-sports', name: 'Sports', slug: 'sports' },
+  { id: 'cat-graduations', name: 'Graduations', slug: 'graduations' },
+  { id: 'cat-360-cinematic', name: '360 Cinematic', slug: '360-cinematic' }
 ];
 
-const STORAGE_KEY = 'captura_categories_list_v1';
+const STORAGE_KEY = 'captura_categories_list_v2';
 const DB_NAME = 'captura_cms_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'cms_data';

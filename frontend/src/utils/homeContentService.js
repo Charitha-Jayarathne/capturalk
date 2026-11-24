@@ -1,17 +1,46 @@
-// Default Home Page Configuration (Fine-Art Wedding Photography)
+// Default Home Page Configuration (CapturaLK Fine Art & Events)
 export const DEFAULT_CATEGORY_ITEMS = [
   {
-    id: 'weddings',
-    title: 'Weddings',
-    subtitle: 'Sacred Nuptials & Traditions',
-    mediaType: 'images', // 'images' | 'videos' | 'both'
+    id: 'events',
+    title: 'Events',
+    subtitle: 'Galas & Brand Masterpieces',
+    mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Sacred Poruwa Ceremony', location: 'The Grand Kandyan Hotel', url: 'https://images.unsplash.com/photo-1606800052052-a08af7148866?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Sunset Coastal Nuptials', location: 'Jetwing Lighthouse, Galle', url: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Regal Kandyan Bride', location: 'Cinnamon Grand Luxury Suite', url: 'https://images.unsplash.com/photo-1583939003579-730e3918a45a?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Grand Ballroom Revelry', location: 'Galle Face Hotel, Colombo', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Golden Hour Vows', location: 'Amanwella Beach, Tangalle', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' }
+      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
+      { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
+      { id: 5, title: 'VIP Awards Ceremony', location: 'Kingsbury Waterfront', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'concerts',
+    title: 'Concerts',
+    subtitle: 'Live Stage & Musical Spectacles',
+    mediaType: 'images',
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Acoustic Arena Night', location: 'Nelum Pokuna Theatre', url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Symphony Orchestral Gala', location: 'BMICH Main Auditorium', url: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=85' },
+      { id: 3, title: 'Electric Festival Live', location: 'Colombo Racecourse', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=85' }
+    ],
+    videoUrl: '',
+    videoPoster: '',
+    videoTitle: ''
+  },
+  {
+    id: 'sports',
+    title: 'Sports',
+    subtitle: 'High Action & Athletic Triumph',
+    mediaType: 'images',
+    isHidden: false,
+    slides: [
+      { id: 1, title: 'Championship Match Point', location: 'SSC Cricket Grounds', url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=85' },
+      { id: 2, title: 'Marathon Finish Line', location: 'Galle Face Green, Colombo', url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=1200&q=85' }
     ],
     videoUrl: '',
     videoPoster: '',
@@ -35,42 +64,8 @@ export const DEFAULT_CATEGORY_ITEMS = [
     videoTitle: ''
   },
   {
-    id: 'preshoots',
-    title: 'Pre-Shoots',
-    subtitle: 'Couples & Golden Hour Vignettes',
-    mediaType: 'images',
-    isHidden: false,
-    slides: [
-      { id: 1, title: 'Highlands Mist & Romance', location: 'Ceylon Tea Trails, Nuwara Eliya', url: 'https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Lakeside Twilight Serenade', location: 'Bolgoda Lake Sanctuary', url: 'https://images.unsplash.com/photo-1520854221256-17451cc331bf?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Dutch Fort Sunset Glow', location: 'Galle Ramparts Lighthouse', url: 'https://images.unsplash.com/photo-1537633552985-df8429e8048b?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Ella Mountain Panorama', location: 'Nine Arch Demodara', url: 'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Mirissa Coastal Reverie', location: 'Coconut Tree Hill', url: 'https://images.unsplash.com/photo-1507525428034-b723cf961d3e?auto=format&fit=crop&w=1200&q=85' }
-    ],
-    videoUrl: '',
-    videoPoster: '',
-    videoTitle: ''
-  },
-  {
-    id: 'commercial',
-    title: 'Events & Corporate',
-    subtitle: 'Galas & Brand Masterpieces',
-    mediaType: 'images',
-    isHidden: false,
-    slides: [
-      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511578314322-379afb476865?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'VIP Awards Ceremony', location: 'Kingsbury Waterfront', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=85' }
-    ],
-    videoUrl: '',
-    videoPoster: '',
-    videoTitle: ''
-  },
-  {
-    id: 'video360',
-    title: '360° Cinematic',
+    id: '360-cinematic',
+    title: '360 Cinematic',
     subtitle: 'Immersive Motion Experience',
     mediaType: 'videos',
     isHidden: false,
@@ -253,7 +248,7 @@ export const DEFAULT_HOME_CONTENT = {
   }
 };
 
-const STORAGE_KEY = 'captura_home_cms_v1';
+const STORAGE_KEY = 'captura_home_cms_v2';
 const DB_NAME = 'captura_cms_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'cms_data';
