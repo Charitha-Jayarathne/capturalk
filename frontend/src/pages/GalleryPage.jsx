@@ -5,7 +5,10 @@ import { getAlbums, getAlbumsAsync, DEFAULT_ALBUMS } from '../utils/albumService
 import { getCategories, getCategoriesAsync } from '../utils/categoryService';
 
 export default function GalleryPage({ onOpenBooking }) {
-  const [albums, setAlbums] = useState(() => getAlbums());
+  const [albums, setAlbums] = useState(() => {
+    const list = getAlbums();
+    return Array.isArray(list) ? list : [];
+  });
   const [categoriesList, setCategoriesList] = useState(() => getCategories());
   const [selectedCategory, setSelectedCategory] = useState('ALL');
   const [searchQuery, setSearchQuery] = useState('');
@@ -14,7 +17,7 @@ export default function GalleryPage({ onOpenBooking }) {
 
   useEffect(() => {
     getAlbumsAsync().then((loaded) => {
-      if (loaded && loaded.length > 0) {
+      if (Array.isArray(loaded)) {
         setAlbums(loaded);
       }
     });
@@ -30,10 +33,11 @@ export default function GalleryPage({ onOpenBooking }) {
         setAlbums(e.detail);
       } else {
         getAlbumsAsync().then((loaded) => {
-          if (loaded && Array.isArray(loaded)) {
+          if (Array.isArray(loaded)) {
             setAlbums(loaded);
           } else {
-            setAlbums(getAlbums());
+            const list = getAlbums();
+            setAlbums(Array.isArray(list) ? list : []);
           }
         });
       }
@@ -59,7 +63,7 @@ export default function GalleryPage({ onOpenBooking }) {
     };
   }, []);
 
-  const displayAlbums = (albums && albums.length > 0) ? albums : DEFAULT_ALBUMS;
+  const displayAlbums = Array.isArray(albums) ? albums : [];
 
   // ONLY user-defined categories are displayed!
   const categories = ['ALL', ...categoriesList.map(c => c.name.toUpperCase())];
@@ -210,7 +214,11 @@ export default function GalleryPage({ onOpenBooking }) {
           <div className="py-24 text-center text-neutral-400">
             <Camera className="w-10 h-10 text-neutral-600 mx-auto mb-3" />
             <h3 className="text-lg text-white font-medium mb-1">No albums found</h3>
-            <p className="text-sm text-neutral-500">Try adjusting your category filter or search keywords.</p>
+            <p className="text-sm text-neutral-500">
+              {displayAlbums.length === 0
+                ? 'No albums published yet. Upload albums via the Admin Console.'
+                : 'Try adjusting your category filter or search keywords.'}
+            </p>
           </div>
         ) : (
           <div style={{

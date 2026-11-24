@@ -6,16 +6,16 @@ import { getRecentAlbums, getAlbumsAsync, DEFAULT_ALBUMS } from '../utils/albumS
 export default function RecentAlbumsShowcase({ content }) {
   const [albums, setAlbums] = useState(() => {
     const initial = getRecentAlbums(12);
-    return (initial && initial.length > 0) ? initial : DEFAULT_ALBUMS.slice(0, 12);
+    return Array.isArray(initial) ? initial : [];
   });
 
   useEffect(() => {
-    // Initial async hydration from IndexedDB if available
+    // Initial async hydration from backend or IndexedDB
     getAlbumsAsync().then((loaded) => {
-      if (loaded && loaded.length > 0) {
+      if (Array.isArray(loaded)) {
         setAlbums(loaded.slice(0, 12));
       } else {
-        setAlbums(DEFAULT_ALBUMS.slice(0, 12));
+        setAlbums([]);
       }
     });
 
@@ -24,10 +24,11 @@ export default function RecentAlbumsShowcase({ content }) {
         setAlbums(e.detail.slice(0, 12));
       } else {
         getAlbumsAsync().then((loaded) => {
-          if (loaded) {
+          if (Array.isArray(loaded)) {
             setAlbums(loaded.slice(0, 12));
           } else {
-            setAlbums(getRecentAlbums(12));
+            const fresh = getRecentAlbums(12);
+            setAlbums(Array.isArray(fresh) ? fresh : []);
           }
         });
       }
@@ -42,11 +43,11 @@ export default function RecentAlbumsShowcase({ content }) {
     };
   }, []);
 
-  if (content?.isHidden) {
+  const displayAlbums = Array.isArray(albums) ? albums.slice(0, 12) : [];
+
+  if (content?.isHidden || displayAlbums.length === 0) {
     return null;
   }
-
-  const displayAlbums = (albums && albums.length > 0) ? albums.slice(0, 12) : DEFAULT_ALBUMS.slice(0, 12);
   const isCustomBg = Boolean(content?.customBgImage) && content?.bgType !== 'default';
   const bgOpacity = content?.bgOpacity !== undefined ? content.bgOpacity : 0.40;
 

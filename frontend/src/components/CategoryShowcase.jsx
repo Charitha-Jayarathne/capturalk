@@ -3,9 +3,11 @@ import { Play, Pause, Volume2, VolumeX, ArrowRight, Camera, Video, Film } from '
 import { Link } from 'react-router-dom';
 import RevealOnScroll from './RevealOnScroll';
 import { getHomeContent, getHomeContentAsync, DEFAULT_CATEGORY_ITEMS } from '../utils/homeContentService';
+import { getCategories, getCategoriesAsync } from '../utils/categoryService';
 
 export default function CategoryShowcase({ onOpenBooking, content }) {
   const [categoryContent, setCategoryContent] = useState(content || getHomeContent().categories);
+  const [systemCategories, setSystemCategories] = useState(() => getCategories());
 
   useEffect(() => {
     if (content) {
@@ -23,17 +25,71 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
         }
       });
     };
+
+    getCategoriesAsync().then((loaded) => {
+      if (Array.isArray(loaded) && loaded.length > 0) {
+        setSystemCategories(loaded);
+      }
+    });
+
+    const handleCatsUpdate = (e) => {
+      if (e?.detail && Array.isArray(e.detail)) {
+        setSystemCategories(e.detail);
+      } else {
+        getCategoriesAsync().then((loaded) => {
+          if (Array.isArray(loaded)) setSystemCategories(loaded);
+        });
+      }
+    };
+
     window.addEventListener('captura_home_updated', handleUpdate);
+    window.addEventListener('captura_categories_updated', handleCatsUpdate);
     window.addEventListener('storage', handleUpdate);
+    window.addEventListener('storage', handleCatsUpdate);
     return () => {
       window.removeEventListener('captura_home_updated', handleUpdate);
+      window.removeEventListener('captura_categories_updated', handleCatsUpdate);
       window.removeEventListener('storage', handleUpdate);
+      window.removeEventListener('storage', handleCatsUpdate);
     };
   }, []);
 
-  // Filter only non-hidden categories
+  // Filter only active categories matching system categories
   const rawItems = categoryContent?.items || DEFAULT_CATEGORY_ITEMS;
-  const categories = rawItems.filter((c) => !c.isHidden);
+
+  const categories = (Array.isArray(systemCategories) && systemCategories.length > 0)
+    ? systemCategories.map((sysCat) => {
+        const sysNameLower = (sysCat.name || '').toLowerCase();
+        const existing = rawItems.find((it) => {
+          const itId = (it.id || '').toLowerCase();
+          const itTitle = (it.title || '').toLowerCase();
+          return (
+            itId === sysNameLower ||
+            itTitle === sysNameLower ||
+            (sysNameLower === 'events' && (itId === 'commercial' || itTitle.includes('events'))) ||
+            (sysNameLower.includes('360') && (itId === 'video360' || itTitle.includes('360')))
+          );
+        });
+
+        if (existing) {
+          return { ...existing, title: sysCat.name };
+        }
+
+        return {
+          id: sysCat.id || sysCat.slug,
+          title: sysCat.name,
+          subtitle: 'Artistry & Excellence',
+          mediaType: sysCat.name.toLowerCase().includes('video') || sysCat.name.toLowerCase().includes('cinematic') ? 'videos' : 'images',
+          isHidden: false,
+          slides: [
+            { id: 1, title: `${sysCat.name} Showcase`, location: 'Colombo, Sri Lanka', url: 'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?auto=format&fit=crop&w=1200&q=85' }
+          ],
+          videoUrl: 'https://assets.mixkit.co/videos/preview/mixkit-bride-and-groom-posing-in-a-field-at-sunset-42998-large.mp4',
+          videoPoster: 'https://images.unsplash.com/photo-1519741497674-611481863552?auto=format&fit=crop&w=1200&q=80',
+          videoTitle: `${sysCat.name} Cinematic Experience`
+        };
+      }).filter((c) => !c.isHidden)
+    : rawItems.filter((c) => !c.isHidden);
 
   const [activePanel, setActivePanel] = useState(0);
   const [slideIndices, setSlideIndices] = useState({});
