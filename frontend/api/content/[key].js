@@ -3,20 +3,26 @@ import mongoose from 'mongoose';
 const MONGODB_URI = process.env.MONGODB_URI || 'mongodb+srv://jayarathnacharitha5_db_user:5a6TjtgwWQXfwzFJ@cluster0.wz1ijx2.mongodb.net/capturalk?retryWrites=true&w=majority&appName=Cluster0';
 
 let isConnected = false;
+let lastFailureTime = 0;
 
 async function connectDB() {
   if (isConnected && mongoose.connection.readyState === 1) {
     return true;
   }
+  // Cooldown: If connection failed recently, return immediately to prevent hanging
+  if (Date.now() - lastFailureTime < 60000) {
+    return false;
+  }
   try {
     const conn = await mongoose.connect(MONGODB_URI, {
-      serverSelectionTimeoutMS: 5000,
+      serverSelectionTimeoutMS: 800,
       bufferCommands: false,
     });
     isConnected = conn.connections[0].readyState === 1;
     return true;
   } catch (err) {
-    console.warn('Vercel Serverless MongoDB Connect Error:', err.message);
+    lastFailureTime = Date.now();
+    console.warn('Fast fallback (DB connection delayed):', err.message);
     return false;
   }
 }

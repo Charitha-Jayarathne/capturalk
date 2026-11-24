@@ -152,6 +152,8 @@ export default function StorySection({ onOpenBooking, content }) {
                     src={featuredImg}
                     alt="Fine Art Wedding by Captura LK"
                     onLoad={handleImgLoad}
+                    loading="lazy"
+                    decoding="async"
                     className="w-full h-full object-contain object-center transition-transform duration-700 group-hover:scale-[1.05] animate-story-photo-breathe"
                   />
 

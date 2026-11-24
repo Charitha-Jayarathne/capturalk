@@ -32,8 +32,8 @@ export default function RevealOnScroll({
         }
       },
       {
-        threshold: threshold,
-        rootMargin: '0px 0px -40px 0px'
+        threshold: Math.min(threshold, 0.05),
+        rootMargin: '40px 0px 20px 0px'
       }
     );
 
