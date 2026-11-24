@@ -256,6 +256,8 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                       src={photo.url} 
                       alt="" 
                       aria-hidden="true"
+                      decoding="async"
+                      loading={i === 0 ? "eager" : "lazy"}
                       style={{
                         position: 'absolute',
                         inset: 0,
@@ -272,6 +274,8 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                       <img 
                         src={photo.url} 
                         alt={photo.title || cat.title} 
+                        decoding="async"
+                        loading={i === 0 ? "eager" : "lazy"}
                         style={{
                           maxWidth: '100%',
                           maxHeight: '100%',
@@ -313,6 +317,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                         loop
                         muted={videoMutedMap[cat.id] ?? true}
                         playsInline
+                        preload="metadata"
                         style={{
                           maxWidth: '100%',
                           maxHeight: '100%',
@@ -561,6 +566,7 @@ export default function CategoryShowcase({ onOpenBooking, content }) {
                                 loop
                                 muted={videoMutedMap[cat.id] ?? true}
                                 playsInline
+                                preload="metadata"
                                 style={{
                                   maxWidth: '100%',
                                   maxHeight: '100%',

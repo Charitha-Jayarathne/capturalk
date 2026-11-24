@@ -481,9 +481,12 @@ export function getHomeContent() {
 export async function getHomeContentAsync() {
   const apiBase = (import.meta.env.VITE_API_URL || '/api').replace(/\/+$/, '');
 
-  // 1. Try Backend API first so any browser / device gets current centralized CMS state
+  // 1. Try Backend API first with fast 600ms timeout so page loads instantly
   try {
-    const res = await fetch(`${apiBase}/content/home`, { cache: 'no-cache' });
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 600);
+    const res = await fetch(`${apiBase}/content/home`, { cache: 'no-cache', signal: controller.signal });
+    clearTimeout(timeoutId);
     if (res.ok) {
       const result = await res.json();
       if (result?.success && result?.data) {

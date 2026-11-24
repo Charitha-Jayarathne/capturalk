@@ -214,7 +214,8 @@ export default function RecentAlbumsShowcase({ content }) {
               <img
                 src={album.coverImage}
                 alt={album.title}
-                loading="eager"
+                loading={idx < 4 ? "eager" : "lazy"}
+                decoding="async"
                 className="album-img"
               />
 
