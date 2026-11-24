@@ -132,7 +132,7 @@ export const DEFAULT_PARTNERS = [
 export const DEFAULT_HOME_CONTENT = {
   // 1. HERO SECTION
   hero: {
-    isHidden: false,
+    isHidden: true,
     title: 'CAPTURA LK',
     subtitle: 'Fine Art Wedding & Event Photography',
     tagline: 'CAPTURING SOULS, CRAFTING MEMORIES',
@@ -248,7 +248,7 @@ export const DEFAULT_HOME_CONTENT = {
   }
 };
 
-const STORAGE_KEY = 'captura_home_cms_v2';
+const STORAGE_KEY = 'captura_home_cms_v3';
 const DB_NAME = 'captura_cms_db';
 const DB_VERSION = 1;
 const STORE_NAME = 'cms_data';
@@ -460,7 +460,7 @@ export function getHomeContent() {
     if (saved) {
       const parsed = JSON.parse(saved);
       return {
-        hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
+        hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: parsed.hero?.isHidden !== undefined ? Boolean(parsed.hero.isHidden) : DEFAULT_HOME_CONTENT.hero.isHidden },
         categories: mergeCategories(parsed.categories),
         albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
         partners: mergePartners(parsed.partners),
@@ -489,7 +489,7 @@ export async function getHomeContentAsync() {
       if (result?.success && result?.data) {
         const parsed = result.data;
         const merged = {
-          hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
+          hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: parsed.hero?.isHidden !== undefined ? Boolean(parsed.hero.isHidden) : DEFAULT_HOME_CONTENT.hero.isHidden },
           categories: mergeCategories(parsed.categories),
           albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
           partners: mergePartners(parsed.partners),
@@ -519,7 +519,7 @@ export async function getHomeContentAsync() {
         if (req.result) {
           const parsed = req.result;
           const merged = {
-            hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: Boolean(parsed.hero?.isHidden) },
+            hero: { ...DEFAULT_HOME_CONTENT.hero, ...parsed.hero, isHidden: parsed.hero?.isHidden !== undefined ? Boolean(parsed.hero.isHidden) : DEFAULT_HOME_CONTENT.hero.isHidden },
             categories: mergeCategories(parsed.categories),
             albums: { ...DEFAULT_HOME_CONTENT.albums, ...parsed.albums, isHidden: Boolean(parsed.albums?.isHidden) },
             partners: mergePartners(parsed.partners),
