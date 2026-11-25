@@ -1,6 +1,24 @@
 // Fine-Art Client Albums Service (IndexedDB + LocalStorage with Reactive Sync)
 
-export const DEFAULT_ALBUMS = [];
+export const DEFAULT_ALBUMS = [
+  {
+    id: "album-1795542167373",
+    title: "vitalhub Masquerade Ball",
+    subtitle: "",
+    category: "Events",
+    location: "Colombo, Sri Lanka",
+    date: "November 2026",
+    photoCount: 13,
+    coverPhoto: "/defaults/album-vitalhub-cover.webp",
+    photos: [
+      "/defaults/album-vitalhub-1.webp",
+      "/defaults/album-vitalhub-2.webp",
+      "/defaults/album-vitalhub-3.webp",
+      "/defaults/album-vitalhub-4.webp",
+      "/defaults/album-vitalhub-5.webp"
+    ]
+  }
+];
 
 const STORAGE_KEY = 'captura_albums_cms_v2';
 const DB_NAME = 'captura_cms_db';

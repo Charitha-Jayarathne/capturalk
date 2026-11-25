@@ -7,11 +7,12 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Annual Corporate Gala', location: 'Shangri-La Grand Ballroom', url: 'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Luxury Brand Product Launch', location: 'Colombo Port City Marina', url: 'https://images.unsplash.com/photo-1492684223066-81342ee5ff30?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Celebrity Jubilee Dinner', location: 'Hilton Colombo', url: 'https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'International Business Forum', location: 'Cinnamon Life Atrium', url: 'https://images.unsplash.com/photo-1515187029135-18ee286d815b?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'VIP Awards Ceremony', location: 'Kingsbury Waterfront', url: 'https://images.unsplash.com/photo-1475721027785-f74eccf877e2?auto=format&fit=crop&w=1200&q=85' }
+      {
+        id: 1795545037211,
+        title: 'Events',
+        location: '',
+        url: '/defaults/events-1.jpg'
+      }
     ],
     videoUrl: '',
     videoPoster: '',
@@ -24,9 +25,24 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Acoustic Arena Night', location: 'Nelum Pokuna Theatre', url: 'https://images.unsplash.com/photo-1516450360452-9312f5e86fc7?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Symphony Orchestral Gala', location: 'BMICH Main Auditorium', url: 'https://images.unsplash.com/photo-1465847899084-d164df4dedc6?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Electric Festival Live', location: 'Colombo Racecourse', url: 'https://images.unsplash.com/photo-1470225620780-dba8ba36b745?auto=format&fit=crop&w=1200&q=85' }
+      {
+        id: 1,
+        title: 'Acoustic Arena Night',
+        location: 'Nelum Pokuna Theatre',
+        url: '/defaults/concerts-1.jpg'
+      },
+      {
+        id: 2,
+        title: 'Symphony Orchestral Gala',
+        location: 'BMICH Main Auditorium',
+        url: '/defaults/concerts-2.jpg'
+      },
+      {
+        id: 3,
+        title: 'Electric Festival Live',
+        location: 'Colombo Racecourse',
+        url: '/defaults/concerts-3.jpg'
+      }
     ],
     videoUrl: '',
     videoPoster: '',
@@ -39,8 +55,18 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Championship Match Point', location: 'SSC Cricket Grounds', url: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Marathon Finish Line', location: 'Galle Face Green, Colombo', url: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?auto=format&fit=crop&w=1200&q=85' }
+      {
+        id: 1,
+        title: 'Championship Match Point',
+        location: 'SSC Cricket Grounds',
+        url: '/defaults/sports-1.jpg'
+      },
+      {
+        id: 2,
+        title: 'Marathon Finish Line',
+        location: 'Galle Face Green, Colombo',
+        url: '/defaults/sports-2.jpg'
+      }
     ],
     videoUrl: '',
     videoPoster: '',
@@ -53,11 +79,18 @@ export const DEFAULT_CATEGORY_ITEMS = [
     mediaType: 'images',
     isHidden: false,
     slides: [
-      { id: 1, title: 'Convocation Day Pride', location: 'BMICH Main Hall, Colombo', url: 'https://images.unsplash.com/photo-1523240795612-9a054b0db644?auto=format&fit=crop&w=1200&q=85' },
-      { id: 2, title: 'Honorary Cap Toss', location: 'University Grounds', url: 'https://images.unsplash.com/photo-1541339907198-e08756dedf3f?auto=format&fit=crop&w=1200&q=85' },
-      { id: 3, title: 'Graduate Portraiture', location: 'Studio Atelier Colombo', url: 'https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=1200&q=85' },
-      { id: 4, title: 'Valedictorian Walk', location: 'University Quadrangle', url: 'https://images.unsplash.com/photo-1525921429624-479b6a26d84d?auto=format&fit=crop&w=1200&q=85' },
-      { id: 5, title: 'Family Heritage Triumph', location: 'Memorial Hall Colombo', url: 'https://images.unsplash.com/photo-1517486808906-6ca8b3f04846?auto=format&fit=crop&w=1200&q=85' }
+      {
+        id: 1,
+        title: 'Convocation Day Pride',
+        location: 'BMICH Main Hall, Colombo',
+        url: '/defaults/graduations-1.jpg'
+      },
+      {
+        id: 2,
+        title: 'Honorary Cap Toss',
+        location: 'University Grounds',
+        url: '/defaults/graduations-2.jpg'
+      }
     ],
     videoUrl: '',
     videoPoster: '',
