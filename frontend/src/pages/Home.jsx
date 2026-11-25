@@ -5,53 +5,22 @@ import RecentAlbumsShowcase from '../components/RecentAlbumsShowcase';
 import TrustedPartnersSection from '../components/TrustedPartnersSection';
 import StorySection from '../components/StorySection';
 import RevealOnScroll from '../components/RevealOnScroll';
-import PageLoader from '../components/PageLoader';
 import { Star, ShieldCheck, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { getHomeContent, getHomeContentAsync } from '../utils/homeContentService';
-import { getCategoriesAsync } from '../utils/categoryService';
-import { getAlbumsAsync } from '../utils/albumService';
 
 export default function Home({ onOpenBooking }) {
   const [content, setContent] = useState(getHomeContent());
-  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    let isMounted = true;
-
-    // Load full customized data from MongoDB Atlas / IndexedDB in parallel
-    const loadAllContent = async () => {
-      try {
-        const [loadedHome] = await Promise.all([
-          getHomeContentAsync(),
-          getCategoriesAsync(),
-          getAlbumsAsync()
-        ]);
-        if (isMounted && loadedHome) {
-          setContent(loadedHome);
-        }
-      } catch (err) {
-        console.warn('Initial load error:', err);
-      } finally {
-        if (isMounted) {
-          // Brief pause so images decode and transition is seamless
-          setTimeout(() => {
-            if (isMounted) setLoading(false);
-          }, 350);
-        }
-      }
-    };
-
-    loadAllContent();
-
-    // Safety timeout: Never leave the user stuck on loading screen longer than 3.5s
-    const safetyTimer = setTimeout(() => {
-      if (isMounted) setLoading(false);
-    }, 3500);
+    // Initial async hydration from IndexedDB / MongoDB
+    getHomeContentAsync().then((loaded) => {
+      if (loaded) setContent(loaded);
+    });
 
     const handleUpdate = () => {
       getHomeContentAsync().then((loaded) => {
-        if (isMounted) setContent(loaded || getHomeContent());
+        setContent(loaded || getHomeContent());
       });
     };
 
@@ -59,8 +28,6 @@ export default function Home({ onOpenBooking }) {
     window.addEventListener('storage', handleUpdate);
 
     return () => {
-      isMounted = false;
-      clearTimeout(safetyTimer);
       window.removeEventListener('captura_home_updated', handleUpdate);
       window.removeEventListener('storage', handleUpdate);
     };
@@ -73,11 +40,7 @@ export default function Home({ onOpenBooking }) {
   const calloutBgOpacity = content?.callout?.bgOpacity !== undefined ? content.callout.bgOpacity : 0.40;
 
   return (
-    <>
-      {/* Luxury Studio Vault Loader (Prevents flash of default items) */}
-      <PageLoader loading={loading} />
-
-      <div className={content?.hero?.isHidden ? "pt-20 sm:pt-24 lg:pt-28" : ""}>
+    <div className={content?.hero?.isHidden ? "pt-20 sm:pt-24 lg:pt-28" : ""}>
       {/* Fullscreen Hero Section */}
       {!content?.hero?.isHidden && (
         <Hero onOpenBooking={onOpenBooking} content={content.hero} />
@@ -289,6 +252,5 @@ export default function Home({ onOpenBooking }) {
           </div>
       )}
     </div>
-    </>
   );
 }
